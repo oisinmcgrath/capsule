@@ -1,0 +1,7 @@
+{
+  "name": "taskboard",
+  "version": "1.0.0",
+  "description": "Persistent pending-work whiteboards that survive chat sessions.",
+  "type": "module",
+  "bin": { "taskboard": "./taskboard.js" }
+}

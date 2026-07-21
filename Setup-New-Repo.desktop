@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Capsule
+GenericName=Sandboxed repo installer
+Comment=Scaffold a DevPod + Podman + VSCodium sandbox pre-wired for autonomous agent work
+Exec=/home/user/projects/capsule/wizard-launch.sh
+Path=/home/user/projects/capsule
+Icon=applications-development
+Terminal=true
+Categories=Development;
+Keywords=devpod;podman;vscodium;container;sandbox;wizard;agent;
+StartupNotify=false

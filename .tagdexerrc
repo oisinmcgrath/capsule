@@ -1,0 +1,2 @@
+# tagdexer configuration — points the CLI at the shared (central) source.
+genericPath=/workspaces/tagdexer-source

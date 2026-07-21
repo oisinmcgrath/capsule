@@ -1,0 +1,2 @@
+- [No Co-Author Trailer](feedback_commit_no_coauthor.md) — never put "Co-Authored-By: Claude" in commit messages; state what changed
+- [No AskUserQuestion](feedback_no_askuserquestion.md) — never use the AskUserQuestion tool; ask questions inline in chat

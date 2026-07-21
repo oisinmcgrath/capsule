@@ -1,0 +1,762 @@
+{
+  "active": {
+    "aliases": [
+      "live",
+      "deployed"
+    ],
+    "description": "Currently deployed and running."
+  },
+  "development": {
+    "aliases": [
+      "dev",
+      "wip",
+      "prototype"
+    ],
+    "description": "Working prototype, not yet deployed."
+  },
+  "flagged": {
+    "aliases": [
+      "flag",
+      "review"
+    ],
+    "description": "Not to be trusted, status unknown, owner review required."
+  },
+  "deprecated": {
+    "aliases": [
+      "deprecate",
+      "old",
+      "obsolete"
+    ],
+    "description": "Not to be trusted, confirmed outdated, interrogate past thinking only."
+  },
+  "tbd": {
+    "aliases": [
+      "to-be-determined",
+      "undetermined",
+      "uncertain"
+    ],
+    "description": "Unknown contents and validity."
+  },
+  "script": {
+    "aliases": [
+      "scripts"
+    ],
+    "description": "Running gear of the software."
+  },
+  "tool": {
+    "aliases": [
+      "tools",
+      "utility"
+    ],
+    "description": "Development utility, reusable across projects."
+  },
+  "docs": {
+    "aliases": [
+      "doc",
+      "documentation"
+    ],
+    "description": "Plans, references, notes, whiteboards, readmes, html, txt, md."
+  },
+  "json": {
+    "aliases": [
+      ".json"
+    ],
+    "description": "JSON files."
+  },
+  "data": {
+    "aliases": [],
+    "description": "Valuable pipeline output, costly if lost."
+  },
+  "config": {
+    "aliases": [
+      "configuration",
+      "settings"
+    ],
+    "description": "Configuration files and settings."
+  },
+  "plans": {
+    "aliases": [
+      "plan",
+      "planning"
+    ],
+    "description": "Documents written as plans; significance correlates with recency."
+  },
+  "core": {
+    "aliases": [],
+    "description": "Central, primary component."
+  },
+  "ancillary": {
+    "aliases": [
+      "aux",
+      "auxiliary"
+    ],
+    "description": "Small essential script, part of a larger feature."
+  },
+  "primary": {
+    "aliases": [
+      "primary-docs"
+    ],
+    "description": "Primary documentation."
+  },
+  "secondary": {
+    "aliases": [
+      "second-degree"
+    ],
+    "description": "Second-degree importance or credibility."
+  },
+  "canon": {
+    "aliases": [
+      "canonical",
+      "standard",
+      "standards"
+    ],
+    "description": "Repo organisation standards and rules."
+  },
+  "axiomatic": {
+    "aliases": [
+      "axiom",
+      "axioms",
+      "foundational"
+    ],
+    "description": "Core foundational assumptions."
+  },
+  "anchor": {
+    "aliases": [
+      "anchoring",
+      "anchored"
+    ],
+    "description": "Foundational reference others calibrate against."
+  },
+  "source": {
+    "aliases": [
+      "truth",
+      "fact",
+      "empirical",
+      "source-of-truth"
+    ],
+    "description": "Axiomatically accepted foundational truth for development."
+  },
+  "absolute": {
+    "aliases": [
+      "immutable"
+    ],
+    "description": "Immutable truth the software depends on."
+  },
+  "calibration": {
+    "aliases": [
+      "calibrated",
+      "tuned"
+    ],
+    "description": "Carefully optimised config, product of iterative refinement."
+  },
+  "backup": {
+    "aliases": [
+      "backups",
+      "preserve"
+    ],
+    "description": "Must be preserved, cannot be recovered if lost."
+  },
+  "online": {
+    "aliases": [
+      "web",
+      "web-facing"
+    ],
+    "description": "Web-facing, must be right."
+  },
+  "orient": {
+    "aliases": [
+      "orientation",
+      "orienting",
+      "map",
+      "mapping",
+      "navigate",
+      "navigation"
+    ],
+    "description": "Associated with repo comprehension and navigation."
+  },
+  "brief": {
+    "aliases": [
+      "briefs"
+    ],
+    "description": "Time-sensitive document, relevant when written, decays fast."
+  },
+  "dated": {
+    "aliases": [
+      "time-bound",
+      "snapshot"
+    ],
+    "description": "Content tied to a specific point in time."
+  },
+  "specific": {
+    "aliases": [
+      "specified",
+      "specialised"
+    ],
+    "description": "Specified mapping data for particular cases."
+  },
+  "analysis": {
+    "aliases": [
+      "analytical",
+      "analyse",
+      "analyze"
+    ],
+    "description": "Analytical work and findings."
+  },
+  "experiment": {
+    "aliases": [
+      "experiments",
+      "experimental"
+    ],
+    "description": "Experiment scripts and design."
+  },
+  "validation": {
+    "aliases": [
+      "validate"
+    ],
+    "description": "Testing and verification of assumptions."
+  },
+  "results": {
+    "aliases": [
+      "result"
+    ],
+    "description": "Experiment output and outcomes."
+  },
+  "define": {
+    "aliases": [
+      "definition",
+      "definitions",
+      "spec",
+      "specification"
+    ],
+    "description": "Definitions, terms, specifications."
+  },
+  "hypotheses": {
+    "aliases": [
+      "hypothesis",
+      "hypothesise",
+      "hypothesize"
+    ],
+    "description": "Hypothesis tracking and testing."
+  },
+  "research": {
+    "aliases": [
+      "research-prompt",
+      "researching"
+    ],
+    "description": "Research prompts and consultation."
+  },
+  "debug": {
+    "aliases": [
+      "debugging",
+      "diagnostic",
+      "diagnostics"
+    ],
+    "description": "Investigation and diagnostic work."
+  },
+  "report": {
+    "aliases": [
+      "reports",
+      "reporting"
+    ],
+    "description": "Generated reports. Context comes from co-tags."
+  },
+  "export": {
+    "aliases": [
+      "exports",
+      "exporting"
+    ],
+    "description": "Data export and output generation."
+  },
+  "print": {
+    "aliases": [
+      "printing",
+      "printable"
+    ],
+    "description": "Printable output."
+  },
+  "pdf": {
+    "aliases": [
+      ".pdf"
+    ],
+    "description": "PDF generation."
+  },
+  "compress": {
+    "aliases": [
+      "compression",
+      "zip",
+      "archive-compress"
+    ],
+    "description": "Data management: tidying, optimising storage, integrity."
+  },
+  "management": {
+    "aliases": [
+      "manage",
+      "maintain",
+      "maintenance"
+    ],
+    "description": "Data systems management and maintenance."
+  },
+  "clean": {
+    "aliases": [
+      "cleaning",
+      "cleanse",
+      "denoise"
+    ],
+    "description": "Clean noise from data for processing."
+  },
+  "filter": {
+    "aliases": [
+      "filtering",
+      "filtration"
+    ],
+    "description": "Separating usable data from noise."
+  },
+  "preprocessing": {
+    "aliases": [
+      "preprocess",
+      "pre-process",
+      "pre-processing"
+    ],
+    "description": "Data preparation before analysis or model input."
+  },
+  "quantisation": {
+    "aliases": [
+      "quantify",
+      "quantifying",
+      "quantise"
+    ],
+    "description": "Attempting to quantify qualitative data."
+  },
+  "frontend": {
+    "aliases": [
+      "front-end",
+      "client",
+      "client-side"
+    ],
+    "description": "Client-side code (HTML, CSS, JS)."
+  },
+  "backend": {
+    "aliases": [
+      "back-end",
+      "server",
+      "server-side"
+    ],
+    "description": "Server-side logic."
+  },
+  "ui": {
+    "aliases": [
+      "user-interface",
+      "userinterface",
+      "interface",
+      "gui"
+    ],
+    "description": "User interface components."
+  },
+  "database": {
+    "aliases": [
+      "db",
+      ".db",
+      "sqlite",
+      ".sqlite",
+      "sqlite3"
+    ],
+    "description": "Database interaction."
+  },
+  "registry": {
+    "aliases": [
+      "register"
+    ],
+    "description": "Compact schema of precise data point relationships."
+  },
+  "profile": {
+    "aliases": [
+      "profiling",
+      "profiles"
+    ],
+    "description": "Cross-validated identity with related known variables."
+  },
+  "identity": {
+    "aliases": [
+      "identifying",
+      "identification",
+      "identifier",
+      "identifiers"
+    ],
+    "description": "Identifying markers and data points for cross-validation."
+  },
+  "scorer": {
+    "aliases": [
+      "scoring",
+      "score"
+    ],
+    "description": "Script producing quantitative scores from qualitative data."
+  },
+  "predictor": {
+    "aliases": [
+      "predictive",
+      "prediction"
+    ],
+    "description": "Predictive script or algorithm."
+  },
+  "regression": {
+    "aliases": [
+      "regress"
+    ],
+    "description": "Regression analysis."
+  },
+  "comp": {
+    "aliases": [
+      "comp-model",
+      "computational",
+      "computational-model"
+    ],
+    "description": "Computational model (regression, ML, etc)."
+  },
+  "engine": {
+    "aliases": [],
+    "description": "Powerplant or core processing unit. Context distinguishes mechanical (vehicle) from software."
+  },
+  "estimator": {
+    "aliases": [
+      "estimate",
+      "estimation"
+    ],
+    "description": "Produces estimates or approximations from data."
+  },
+  "discovery": {
+    "aliases": [
+      "discover"
+    ],
+    "description": "Exploratory analysis seeking patterns or insights."
+  },
+  "investigation": {
+    "aliases": [
+      "investigate",
+      "investigating"
+    ],
+    "description": "Targeted inquiry into a specific question or problem."
+  },
+  "intelligence": {
+    "aliases": [
+      "intel"
+    ],
+    "description": "Active analysis and informed decision-making via data."
+  },
+  "version": {
+    "aliases": [
+      "versioned",
+      "iteration"
+    ],
+    "description": "Versioned or iterated work."
+  },
+  "false": {
+    "aliases": [
+      "fake",
+      "falsified"
+    ],
+    "description": "Incorrect, fabricated, or misleading data."
+  },
+  "log": {
+    "aliases": [
+      "logging",
+      "logs"
+    ],
+    "description": "Recorded sequential events or activity history."
+  },
+  "entries": {
+    "aliases": [
+      "rows",
+      "row",
+      "records"
+    ],
+    "description": "Individual records or rows in a dataset."
+  },
+  "pattern": {
+    "aliases": [
+      "patterns"
+    ],
+    "description": "Involving recurring structure or trend in data."
+  },
+  "devtool": {
+    "aliases": [
+      "dev-tool"
+    ],
+    "description": "Developer workflow utility, not part of automation or pipeline."
+  },
+  "checklist": {
+    "aliases": [
+      "checklists"
+    ],
+    "description": "Checklist."
+  },
+  "organise": {
+    "aliases": [
+      "organisation",
+      "organize",
+      "sort",
+      "arrange",
+      "rearrange",
+      "priorities",
+      "prioritisation",
+      "priority"
+    ],
+    "description": "Arranging, ordering, or structuring items by priority or category."
+  },
+  "pool": {
+    "aliases": [
+      "pools"
+    ],
+    "description": "Homogeneous group of comparable items."
+  },
+  "comparison": {
+    "aliases": [
+      "compare",
+      "comparing"
+    ],
+    "description": "Comparing items or groups to identify differences."
+  },
+  "similarity": {
+    "aliases": [
+      "similar",
+      "similarities"
+    ],
+    "description": "Measuring likeness between items."
+  },
+  "threshold": {
+    "aliases": [
+      "thresholds"
+    ],
+    "description": "A boundary value determining inclusion or classification."
+  },
+  "schema": {
+    "aliases": [
+      "schemas",
+      "template"
+    ],
+    "description": "Structural definition or template for data format."
+  },
+  "categorise": {
+    "aliases": [
+      "category",
+      "categories",
+      "categorisation",
+      "groups",
+      "group"
+    ],
+    "description": "Grouping items into defined categories."
+  },
+  "consolidate": {
+    "aliases": [
+      "consolidation",
+      "merge",
+      "merging"
+    ],
+    "description": "Merging or combining related items into fewer groups."
+  },
+  "reduction": {
+    "aliases": [
+      "reduce",
+      "reducing"
+    ],
+    "description": "Reducing complexity or volume of data."
+  },
+  "points": {
+    "aliases": [
+      "multiplier",
+      "score-points",
+      "weighting"
+    ],
+    "description": "Relating to a multiplier or points-based calculation scheme."
+  },
+  "dependency": {
+    "aliases": [
+      "dependencies",
+      "depends"
+    ],
+    "description": "Relationships and dependencies between components."
+  },
+  "batch": {
+    "aliases": [
+      "batches",
+      "batching"
+    ],
+    "description": "Related to batch processing."
+  },
+  "cross": {
+    "aliases": [
+      "cross-validation",
+      "cross-reference",
+      "cross-check"
+    ],
+    "description": "Dual tag; paired with validation or identity for cross-referencing."
+  },
+  "decision": {
+    "aliases": [
+      "decide",
+      "resolution",
+      "resolve",
+      "disambiguate"
+    ],
+    "description": "Resolving ambiguity and choosing between candidates."
+  },
+  "extraction": {
+    "aliases": [
+      "extract"
+    ],
+    "description": "Extracting structured data from raw input."
+  },
+  "input": {
+    "aliases": [
+      "feed",
+      "raw",
+      "intake",
+      "ingest",
+      "incoming",
+      "inbound"
+    ],
+    "description": "Unprocessed or raw data entry point."
+  },
+  "pipeline": {
+    "aliases": [
+      "cascade",
+      "chain",
+      "trigger",
+      "autonomous",
+      "sequential",
+      "series"
+    ],
+    "description": "Part of the pipeline; autonomous, triggers and triggered indirectly."
+  },
+  "start": {
+    "aliases": [
+      "beginning",
+      "initial",
+      "initialise",
+      "begin",
+      "entrypoint"
+    ],
+    "description": "The pipeline starts here."
+  },
+  "v1": {
+    "aliases": [],
+    "description": "First version of a component."
+  },
+  "v2": {
+    "aliases": [],
+    "description": "Second version of a component."
+  },
+  "layout": {
+    "aliases": [
+      "arrangement",
+      "positioning"
+    ],
+    "description": "Arrangement of elements in space."
+  },
+  "inference": {
+    "aliases": [
+      "infer"
+    ],
+    "description": "Making predictions on unseen data, drawing conclusions without explicit evidence."
+  },
+  "labels": {
+    "aliases": [
+      "label",
+      "labelling",
+      "annotation"
+    ],
+    "description": "The process and artefacts of annotation."
+  },
+  "geometry": {
+    "aliases": [
+      "geometric",
+      "spatial",
+      "coordinates"
+    ],
+    "description": "Coordinate planes, trigonometry, mathematical quantification of space."
+  },
+  "awareness": {
+    "aliases": [
+      "aware"
+    ],
+    "description": "Attentiveness to a specific signal or condition; paired with another tag."
+  },
+  "time": {
+    "aliases": [
+      "date",
+      "timestamp",
+      "calendar",
+      "yyyy-mm-dd"
+    ],
+    "description": "Related to date/time data."
+  },
+  "assembler": {
+    "aliases": [],
+    "description": "Combines or groups discrete elements into a unified structure."
+  },
+  "repair": {
+    "aliases": [
+      "fix",
+      "mend"
+    ],
+    "description": "Fixing something broken to restore intended function."
+  },
+  "normaliser": {
+    "aliases": [
+      "normalise",
+      "normalize",
+      "normalizer"
+    ],
+    "description": "Transforms data to a standard form."
+  },
+  "produce": {
+    "aliases": [
+      "producer",
+      "producing"
+    ],
+    "description": "Generates output."
+  },
+  "error": {
+    "aliases": [
+      "err"
+    ],
+    "description": "Related to error."
+  },
+  "detect": {
+    "aliases": [
+      "detection"
+    ],
+    "description": "Identifying the presence of something specific."
+  },
+  "monetary": {
+    "aliases": [
+      "dollar",
+      "financial",
+      "cents"
+    ],
+    "description": "Related to money and currency values."
+  },
+  "bad": {
+    "aliases": [],
+    "description": "Deals with what does not achieve an adequate standard."
+  },
+  "cartridge": {
+    "aliases": [],
+    "description": "Self-contained, swappable module unit registered into a host."
+  },
+  "router": {
+    "aliases": [],
+    "description": "Central dispatch layer that selects the appropriate handler per request."
+  },
+  "uncertainty": {
+    "aliases": [],
+    "description": "Anything concerning the confidence or reliability of a value."
+  },
+  "make-it-work": {
+    "aliases": [],
+    "description": "Ship end-to-end first, optimise components later principle."
+  },
+  "valuation": {
+    "aliases": [],
+    "description": "Assigning or predicting the price of an asset."
+  }
+}

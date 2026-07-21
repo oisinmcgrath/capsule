@@ -1,0 +1,6 @@
+
+config.json: config
+
+domains.json: config, schema
+
+package.json: config

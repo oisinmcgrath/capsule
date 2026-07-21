@@ -1,0 +1,5 @@
+[
+  "receipt_digitizer first container chat: migrate whiteboard.md's 10 pending tasks into its fresh taskboard, then retire whiteboard.md",
+  "Port receipt_digitizer's hardened staleness_check.sh into payload/ once owner's trial succeeds — auto-injects git log <range> output + decision/intent fields instead of telling the agent to run commands (trial started 2026-06-12)",
+  "Auto-configure devpod podman provider in wizard preflight if absent: 'devpod provider add docker --name podman -o DOCKER_PATH=$(command -v podman)'. Fresh devpod has no provider and 'add podman' 404s, so 'devpod up' fails at the last step (hit on Debian 13). Also document in README runbook."
+]

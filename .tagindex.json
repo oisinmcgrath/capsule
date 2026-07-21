@@ -1,0 +1,367 @@
+{
+  "version": "0.04",
+  "lastFullReindex": "2026-07-16T07:44:50.705Z",
+  "tags": {
+    "ancillary": 4,
+    "config": 5,
+    "start": 2,
+    "docs": 11,
+    "canon": 6,
+    "schema": 1,
+    "data": 2,
+    "entries": 2,
+    "orient": 8,
+    "anchor": 1,
+    "core": 5,
+    "devtool": 12,
+    "script": 15,
+    "primary": 1,
+    "tool": 10,
+    "active": 4,
+    "define": 1
+  },
+  "entries": [
+    {
+      "path": ".tagdexerrc",
+      "tags": [
+        "config"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "CLAUDE.md",
+      "tags": [
+        "canon",
+        "docs",
+        "orient"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/check_symlinks.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/check_venv.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/commit_and_log_nudge.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/detect_context.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/onboarding_mandate.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/periodic_reminder.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/protect_devcontainer.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/staleness_check.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/claude_hooks/subagent_reminder.sh",
+      "tags": [
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "payload/memory/feedback_commit_no_coauthor.md",
+      "tags": [
+        "canon",
+        "docs"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "payload/memory/feedback_no_askuserquestion.md",
+      "tags": [
+        "canon",
+        "docs"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "payload/memory/MEMORY.md",
+      "tags": [
+        "ancillary",
+        "docs"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "README.md",
+      "tags": [
+        "docs",
+        "orient",
+        "primary"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "Setup-New-Repo.desktop",
+      "tags": [
+        "ancillary",
+        "config",
+        "start"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "tagdexer/AGENT_README.md",
+      "tags": [
+        "canon",
+        "docs",
+        "orient",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "tagdexer/CHANGELOG.md",
+      "tags": [
+        "docs",
+        "orient",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "tagdexer/indexer.js",
+      "tags": [
+        "active",
+        "core",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "tagdexer/README.md",
+      "tags": [
+        "canon",
+        "docs",
+        "orient",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "tagdexer/shared/core.js",
+      "tags": [
+        "active",
+        "core",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "tagdexer/tracker.js",
+      "tags": [
+        "active",
+        "core",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/config.json",
+      "tags": [
+        "config"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/domain_heuristics.md",
+      "tags": [
+        "define",
+        "docs",
+        "orient"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/domains.json",
+      "tags": [
+        "config",
+        "schema"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/hooks/taskboard_awareness.sh",
+      "tags": [
+        "devtool",
+        "script",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/hooks/taskboard_nudge.sh",
+      "tags": [
+        "devtool",
+        "script",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/install.sh",
+      "tags": [
+        "ancillary",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/lists/infrastructure_whiteboard.json",
+      "tags": [
+        "data",
+        "entries"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/lists/stealth_whiteboard.json",
+      "tags": [
+        "data",
+        "entries"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/MID_SESSION_ONBOARDING.md",
+      "tags": [
+        "docs",
+        "orient",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/package.json",
+      "tags": [
+        "config"
+      ],
+      "source": "tags-file",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/README.md",
+      "tags": [
+        "canon",
+        "docs",
+        "orient",
+        "tool"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "taskboard/taskboard.js",
+      "tags": [
+        "active",
+        "core",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "wizard-launch.sh",
+      "tags": [
+        "ancillary",
+        "script",
+        "start"
+      ],
+      "source": "header",
+      "isFolder": false
+    },
+    {
+      "path": "wizard.sh",
+      "tags": [
+        "anchor",
+        "core",
+        "devtool",
+        "script"
+      ],
+      "source": "header",
+      "isFolder": false
+    }
+  ]
+}
