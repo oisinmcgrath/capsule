@@ -342,33 +342,31 @@ for _v in "${NEEDS_VOLS[@]}"; do
     \"source=$SANITIZED-$_slug,target=$_v,type=volume\""
 done
 
-# Host Wayland clipboard passthrough: mount the host compositor's wayland (and
-# D-Bus) sockets so tools + agents INSIDE the container can read the HOST
-# clipboard — including image/png, which OSC 52 cannot carry. Requires the IDE
-# to be launched from a graphical session so WAYLAND_DISPLAY / XDG_RUNTIME_DIR
-# exist here at create time; if absent we SKIP the mounts and warn rather than
-# ship a broken bind. Sockets land under a dedicated /tmp/host-wayland and
-# WAYLAND_DISPLAY points at the absolute path, so we never overwrite the
-# container's own XDG_RUNTIME_DIR state. (Container vscode is uid 1000 = host
-# uid, so the 0700-ish wayland socket is openable.)
-CLIP_OK=n; WL_SOCK=""; DBUS_SOCK=""; WL_MOUNT_LINES=""; WL_ENV_LINES=""
+# Host Wayland clipboard passthrough: mount the host runtime DIRECTORY (not the
+# single socket file) so tools + agents INSIDE the container can read the HOST
+# clipboard — including image/png, which OSC 52 cannot carry. Mounting the DIR
+# (not the wayland-0 file) is deliberate: a file bind pins one socket inode, so a
+# logout/login or compositor restart makes a fresh host socket and the container
+# is left bound to a dead one ("connection refused"). A directory bind always
+# resolves the CURRENT wayland-0/bus, surviving re-logins with no recreate.
+# Requires the IDE to be launched from a graphical session so WAYLAND_DISPLAY /
+# XDG_RUNTIME_DIR exist here at create time; if absent we SKIP and warn rather
+# than ship a broken mount. Mounted at a dedicated /run/host-xdg target so the
+# container's own XDG_RUNTIME_DIR is never overwritten. (Container vscode is
+# uid 1000 = host uid, so the sockets are openable.)
+CLIP_OK=n; WL_SOCK=""; WL_MOUNT_LINES=""; WL_ENV_LINES=""
 HOST_XDG="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 HOST_WL="${WAYLAND_DISPLAY:-}"
 case "$HOST_WL" in "") WL_SOCK="" ;; /*) WL_SOCK="$HOST_WL" ;; *) WL_SOCK="$HOST_XDG/$HOST_WL" ;; esac
-if [ -n "$WL_SOCK" ] && [ -S "$WL_SOCK" ]; then
+if [ -n "$WL_SOCK" ] && [ -S "$WL_SOCK" ] && [ -d "$HOST_XDG" ]; then
   CLIP_OK=y
-  _dba="${DBUS_SESSION_BUS_ADDRESS:-}"; _dba="${_dba#unix:path=}"; _dba="${_dba%%,*}"
-  if [ -n "$_dba" ] && [ -S "$_dba" ]; then DBUS_SOCK="$_dba"
-  elif [ -S "$HOST_XDG/bus" ]; then DBUS_SOCK="$HOST_XDG/bus"; fi
-  # Leading comma: these follow the last existing mounts[] entry.
+  _wlname="${HOST_WL##*/}"   # bare socket name, e.g. wayland-0 (resolved under the mounted dir)
+  # Leading comma: follows the last existing mounts[] entry. Mount the whole
+  # runtime dir so wayland-0 + bus are always the live ones.
   WL_MOUNT_LINES=",
-    \"source=$WL_SOCK,target=/tmp/host-wayland/wayland-0,type=bind\""
-  WL_ENV_LINES=", \"WAYLAND_DISPLAY\": \"/tmp/host-wayland/wayland-0\""
-  if [ -n "$DBUS_SOCK" ]; then
-    WL_MOUNT_LINES="$WL_MOUNT_LINES,
-    \"source=$DBUS_SOCK,target=/tmp/host-wayland/bus,type=bind\""
-    WL_ENV_LINES="$WL_ENV_LINES, \"DBUS_SESSION_BUS_ADDRESS\": \"unix:path=/tmp/host-wayland/bus\""
-  fi
+    \"source=$HOST_XDG,target=/run/host-xdg,type=bind\""
+  WL_ENV_LINES=", \"WAYLAND_DISPLAY\": \"/run/host-xdg/$_wlname\""
+  [ -S "$HOST_XDG/bus" ] && WL_ENV_LINES="$WL_ENV_LINES, \"DBUS_SESSION_BUS_ADDRESS\": \"unix:path=/run/host-xdg/bus\""
 fi
 
 # runArgs: device passthrough (GPU and/or NPU) + SELinux label-disable. Never
@@ -438,7 +436,7 @@ cat > "$DC/devcontainer.json" <<JSON
 JSON
 ok "devcontainer.json (runArgs: ${RUN_ARGS:-[] — no --pid=host})"
 if [ "$CLIP_OK" = y ]; then
-  ok "host Wayland clipboard passthrough ENABLED (wayland-0${DBUS_SOCK:+ + dbus} -> /tmp/host-wayland; image/png paste into Grok works after rebuild)"
+  ok "host Wayland clipboard passthrough ENABLED (host runtime dir -> /run/host-xdg; survives re-login; image/png paste into Grok works after rebuild)"
 else
   warn "no host WAYLAND_DISPLAY at create time — clipboard passthrough DISABLED. Launch the IDE from the graphical KDE session, then re-run the wizard to enable host image paste."
 fi
@@ -484,10 +482,22 @@ ok "container-claude-settings.json"
 # requirements.txt install (venv exists), so extras layer on top; the prewarm
 # and verify need that venv, which is why this is post-create, not the Dockerfile.
 PCS_EXTRA_BLOCK=""
-if [ "${#NEEDS_PIP[@]}" -gt 0 ] || [ "${#NEEDS_BUILD[@]}" -gt 0 ] || [ -n "$NEEDS_VERIFY" ]; then
+if [ "${#NEEDS_PIP[@]}" -gt 0 ] || [ "${#NEEDS_BUILD[@]}" -gt 0 ] || [ -n "$NEEDS_VERIFY" ] || [ "${#NEEDS_VOLS[@]}" -gt 0 ]; then
   PCS_EXTRA_BLOCK="echo '=== repo needs: venv + extra pip ==='
 [ -x .venv/bin/python3 ] || { rm -rf .venv; python3 -m venv .venv; }
 . .venv/bin/activate"
+  # Named volumes mount ROOT-owned in rootless podman, so the vscode user cannot
+  # write them (the model prewarm silently fails). chown each declared mountpoint
+  # to vscode BEFORE the prewarm/build steps. Needs vscode passwordless sudo
+  # (granted by the devcontainers base image); non-fatal if unavailable.
+  if [ "${#NEEDS_VOLS[@]}" -gt 0 ]; then
+    PCS_EXTRA_BLOCK="$PCS_EXTRA_BLOCK
+echo '=== repo needs: chown named-volume mountpoints to vscode ==='"
+    for _v in "${NEEDS_VOLS[@]}"; do
+      [ -n "$_v" ] && PCS_EXTRA_BLOCK="$PCS_EXTRA_BLOCK
+sudo chown vscode:vscode '$_v' 2>/dev/null || true"
+    done
+  fi
   if [ "${#NEEDS_PIP[@]}" -gt 0 ]; then
     _pipq=""; for _p in "${NEEDS_PIP[@]}"; do _pipq="$_pipq '$_p'"; done
     PCS_EXTRA_BLOCK="$PCS_EXTRA_BLOCK
@@ -886,7 +896,7 @@ if ask_yn "Build + open the container now (devpod up --ide codium)?" y; then
     fi
   fi
   if [ "$CLIP_OK" = y ]; then
-    if ssh "$SANITIZED.devpod" 'command -v wl-paste >/dev/null 2>&1 || { echo CLIP-NOWL; exit 0; }; o=$(WAYLAND_DISPLAY=/tmp/host-wayland/wayland-0 wl-paste --list-types 2>&1); echo "$o" | grep -qi "failed to connect" && echo CLIP-NOCONN || echo CLIP-OK' 2>/dev/null | grep -q CLIP-OK; then
+    if ssh "$SANITIZED.devpod" 'command -v wl-paste >/dev/null 2>&1 || { echo CLIP-NOWL; exit 0; }; o=$(wl-paste --list-types 2>&1); echo "$o" | grep -qi "failed to connect\|connection refused" && echo CLIP-NOCONN || echo CLIP-OK' 2>/dev/null | grep -q CLIP-OK; then
       ok "host clipboard reachable in container (wl-paste connects to the host compositor; image/png will paste into Grok)"
     else
       warn "clipboard not confirmed — wl-paste missing or could not connect. Check the wayland-0 mount + label=disable, and that the IDE was launched from the graphical session"
