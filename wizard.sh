@@ -1,7 +1,7 @@
 #!/bin/bash
 # @tagdex: anchor, core, devtool, script
 # ============================================================================
-# capsule — interactive installer for a new sandboxed
+# Capsule — interactive installer for a new sandboxed
 # DevPod + Podman + VSCodium repo, pre-wired for autonomous agent work
 # (tagdexer + decision log + taskboard + the generic hooks).
 #
@@ -67,7 +67,7 @@ warn() { printf '  %s!%s %s\n' "$c_ylw" "$c_off" "$*"; }
 # prompts. kdialog (KDE-native, Dolphin-style picker) is preferred; zenity is
 # the fallback. Cancel on any dialog aborts the wizard.
 # ---------------------------------------------------------------------------
-WIZ_TITLE="capsule"
+WIZ_TITLE="Capsule"
 GUI_TOOL=""
 if [ "${1:-}" != "--no-gui" ] && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
   if   command -v kdialog >/dev/null 2>&1; then GUI_TOOL=kdialog

@@ -1,9 +1,9 @@
 <!-- @tagdex: docs, orient, primary -->
-# capsule
+# Capsule
 
-**One command to scaffold a fully sandboxed, agent-ready dev container — DevPod + rootless Podman + VSCodium — for running autonomous AI coding agents (Claude Code, Grok, and friends) safely isolated from your host machine.**
+**Sandboxed, agent-ready dev containers in one command — DevPod + rootless Podman + VSCodium — for running autonomous AI coding agents (Claude Code, Grok, and friends) safely isolated from your host machine.**
 
-`capsule` is an interactive, host-side installer (`wizard.sh`) that turns any empty folder into a reproducible [devcontainer](https://containers.dev): it generates the `.devcontainer/` (Dockerfile + `devcontainer.json`), wires the agent hooks, deploys a decision log and a persistent task board, picks a non-clashing forwarded port, handles GPU / NPU / iGPU passthrough, sets up host Wayland clipboard passthrough, and **verifies the container actually attaches** before it declares success. No hand-edited placeholders — every value is derived deterministically, and host-specific settings are asked **once** and reused for every future repo.
+**Capsule** is an interactive, host-side installer (`wizard.sh`) that turns any empty folder into a reproducible [devcontainer](https://containers.dev): it generates the `.devcontainer/` (Dockerfile + `devcontainer.json`), wires the agent hooks, deploys a decision log and a persistent task board, picks a non-clashing forwarded port, handles GPU / NPU / iGPU passthrough, sets up host Wayland clipboard passthrough, and **verifies the container actually attaches** before it declares success. No hand-edited placeholders — every value is derived deterministically, and host-specific settings are asked **once** and reused for every future repo.
 
 > **Use it when** you want to let an AI agent write code, install packages, and run shell commands with broad permissions **without** handing it your real machine — a disposable, rebuildable, network-isolated container that still opens straight into a VSCodium window.
 
@@ -20,6 +20,7 @@
 - **Agent-ready on first launch** — installs generic Claude Code hooks, a lightweight decision log (tagdexer), and a persistent task board, all firing on the first chat; Grok agent hooks are mirrored automatically with no duplicate scripts.
 - **First-run machine profile** — host-specific values (container timezone, git author identity, where tagdexer/setsquare live, and whether to deploy the tagdexer decision-log — always / never / ask) are captured once in `~/.config/capsule/machine.conf` and reused for every repo you scaffold afterwards.
 - **Optional, self-contained tagdexer** — the decision-log CLI is vendored in this repo (works with no external dependency); choose to deploy it into every repo, never, or per-repo, and the wizard can `git clone` it for you on first run.
+- **Auto-installs the DevPod CLI** — if `devpod` isn't found, the first-run profile installs the official release binary for you (or points at your existing build).
 - **Safe on existing repos** — preserves your code, git history, decision log, and task lists; backs up anything it replaces.
 - **Isolation verified, never `--pid=host`** — sidesteps the `open-remote-ssh` "Could not establish connection" attach failure by construction (details below).
 
@@ -31,12 +32,12 @@
 
 ```bash
 # Run on the HOST (Linux), not inside a container:
-cd /path/to/capsule
+cd capsule
 mkdir -p ~/projects/<new-repo>      # create the empty target repo first
 bash wizard.sh
 ```
 
-Answer the prompts (which repo, GPU/NPU/iGPU?, extra apt packages, display name). On its **first ever run** the wizard also sets up your machine profile — container timezone, the git identity to stamp on scaffolded repos, your tagdexer deploy policy (always/never/ask), and where tagdexer/setsquare live (it can `git clone` tagdexer for you) — then saves it and never asks again. It derives everything else and offers to build + open the container at the end.
+Answer the prompts (which repo, GPU/NPU/iGPU?, extra apt packages, display name). On its **first ever run** Capsule also sets up your machine profile — container timezone, the git identity to stamp on scaffolded repos, your tagdexer deploy policy (always/never/ask), and where tagdexer/setsquare live (it can `git clone` tagdexer or install the DevPod CLI for you) — then saves it and never asks again. It derives everything else and offers to build + open the container at the end.
 
 **GUI mode (default on the desktop):** when a display and `kdialog` or `zenity` are present, the questions appear as dialogs — you browse and click the repo folder instead of typing its name, and confirm the derived values in a yes/no box. `kdialog` (KDE-native picker) is preferred if installed; `zenity` is the fallback. Cancel on any dialog aborts. Pass `--no-gui` for the classic terminal prompts. Progress always prints to the terminal.
 
@@ -87,7 +88,7 @@ Decision log (`tagdexer/decisions.jsonl`) starts **absent** (JSONL: absent == em
 
 ## Existing repos
 
-The wizard is safe to run on a repo that already has code and history:
+Capsule is safe to run on a repo that already has code and history:
 
 | | What happens |
 |---|---|
@@ -104,12 +105,12 @@ The `/workspaces` symlink step skips sudo entirely when the links are already co
 ### 1. Never `--pid=host`
 A container with `--pid=host` sees the **host's** process table. `open-remote-ssh` decides whether a server is "already running" by scanning processes — with `--pid=host` it finds *another* container's `codium-server` (same VSCodium build hash), concludes a server is up, takes the reuse path, finds no connection-token file, and aborts (`exitCode 1`, "Could not establish connection"). Plain `ssh` works because it doesn't inspect processes — only the VSCodium client does, which is why "ssh works but the window doesn't."
 
-The wizard emits GPU repos with `runArgs: ["--device=nvidia.com/gpu=all", "--security-opt=label=disable"]` and non-GPU repos with `runArgs: []`. **Never `--pid=host`.**
+Capsule emits GPU repos with `runArgs: ["--device=nvidia.com/gpu=all", "--security-opt=label=disable"]` and non-GPU repos with `runArgs: []`. **Never `--pid=host`.**
 
 ### 2. GPU CDI version is probed + auto-pinned
 *(Applies only when you answer GPU = yes, i.e. an NVIDIA host. On a CPU-only box you answer "no" and `nvidia-ctk` isn't required — the logic stays dormant.)*
 
-Podman 4.9.3 parses CDI spec **≤ 0.6.0**. A driver update can leave `/etc/cdi/nvidia.yaml` at 0.7.0, and `nvidia-ctk` ≥ 1.17 dropped `--cdi-version` and auto-emits the minimum-required (often 0.7.0+) — so `podman run --device nvidia.com/gpu=all` fails with `unresolvable CDI devices` and the container won't start. The wizard:
+Podman 4.9.3 parses CDI spec **≤ 0.6.0**. A driver update can leave `/etc/cdi/nvidia.yaml` at 0.7.0, and `nvidia-ctk` ≥ 1.17 dropped `--cdi-version` and auto-emits the minimum-required (often 0.7.0+) — so `podman run --device nvidia.com/gpu=all` fails with `unresolvable CDI devices` and the container won't start. Capsule:
 1. probes `podman run … nvidia-smi -L`;
 2. if it fails, regenerates — pinned to `0.6.0` if the flag exists, else plain regen;
 3. **re-verifies end-to-end**, so a silent CPU fallback can't pass;
@@ -128,9 +129,9 @@ The deployed [tagdexer](tagdexer/AGENT_README.md) decision-log CLI reads a **cen
 | Symptom | Cause / fix |
 |---|---|
 | `unresolvable CDI devices nvidia.com/gpu=all` | CDI spec version > Podman's ceiling. Regen at ≤ 0.6.0; if the toolkit can't pin, downgrade to `nvidia-container-toolkit=1.16.2-1` and re-run the wizard GPU step. |
-| Window: "Could not establish connection" / "install vscode server non-zero" while **plain ssh works** | Almost always `--pid=host` in runArgs → open-remote-ssh false-positives on another container's server. Remove it. The wizard never adds it; if an old repo has it, delete the line and **recreate via Command-Palette → DevPod: Recreate** (CLI `--recreate` caches the old config). |
+| Window: "Could not establish connection" / "install vscode server non-zero" while **plain ssh works** | Almost always `--pid=host` in runArgs → open-remote-ssh false-positives on another container's server. Remove it. Capsule never adds it; if an old repo has it, delete the line and **recreate via Command-Palette → DevPod: Recreate** (CLI `--recreate` caches the old config). |
 | Title bar shows the **wrong** `.devpod` host | Cosmetic stale label cache. `sqlite3 ~/.config/VSCodium/User/globalStorage/state.vscdb "DELETE FROM ItemTable WHERE key='memento/cachedResourceLabelFormatters2';"` Trust `hostname` in the container terminal, not the title. |
-| `Error port forwarding NNNN: address already in use` | Another process holds the port. The wizard picks a free one; if a clash appears later, find it with `ss -ltnp 'sport = :NNNN'`. |
+| `Error port forwarding NNNN: address already in use` | Another process holds the port. Capsule picks a free one; if a clash appears later, find it with `ss -ltnp 'sport = :NNNN'`. |
 | Decision-log tags show `[project]` only | `genericPath` not resolving in-container. Check `.tagdexerrc` = `/workspaces/tagdexer-source` and that the mount exists. |
 | Editing `.devcontainer/` blocked by the protect hook | `mv .claude/hooks/protect_devcontainer.sh{,.disabled}` → edit → move back. Bash dodges the `Edit\|Write` matcher. |
 | `devpod up --recreate` keeps old runArgs | DevPod cached the parsed config. Use Command-Palette **DevPod: Recreate**, or `devpod delete <name> --force && devpod up <name> --ide codium`. |
@@ -156,9 +157,9 @@ If it prints "failed to connect": check the `wayland-0` mount and that `label=di
 
 - **`wizard.sh`** — the host-side installer. Interactive: asks the per-repo questions, derives the rest, scaffolds, builds, verifies.
 - **`payload/`** — the canonical source it installs *from*: the generic `.claude` hooks and a pristine task board.
-- **`tagdexer/`** — the decision-log + tag-index CLI (mounted into the container, not vendored, so new repos always get the current version).
+- **`tagdexer/`** — the decision-log + tag-index CLI (mounted into the container, not vendored into generated repos, so new repos always get the current version).
 
-When you improve a generic hook in a live repo, copy it into `payload/claude_hooks/` to canonicalize it. The two `block_*` hooks (`block_pip_install`, `block_git_writes`) are deliberately **excluded** from the generic set. The task board **is** vendored (`payload/taskboard/`) because it is self-contained; refresh it when the task board improves. tagdexer is mounted at build time from the central `tagdexer/` sibling of this wizard (overridable via `$CENTRAL_TAGDEXER`).
+When you improve a generic hook in a live repo, copy it into `payload/claude_hooks/` to canonicalize it. The two `block_*` hooks (`block_pip_install`, `block_git_writes`) are deliberately **excluded** from the generic set. The task board **is** vendored (`payload/taskboard/`) because it is self-contained; refresh it when the task board improves. tagdexer is mounted at build time from the central `tagdexer/` source (overridable via `$CENTRAL_TAGDEXER`).
 
 ---
 

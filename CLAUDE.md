@@ -1,7 +1,7 @@
 <!-- @tagdex: canon, docs, orient -->
 **First action: read [tagdexer/AGENT_README.md](tagdexer/AGENT_README.md) in full.** Use tagdex as your primary navigation. (Onboarding + trackdexer protocol are injected by the SessionStart hook.)
 
-# capsule
+# Capsule
 
 A host-side install wizard that scaffolds a new sandboxed **DevPod + Podman + VSCodium** repo, pre-wired for autonomous agent work — tagdexer, decision log, taskboard, and the generic hooks all installed and firing on the first chat. Replaces the old hand-substituted runbook.
 
