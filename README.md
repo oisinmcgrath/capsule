@@ -1,6 +1,6 @@
 <!-- @tagdex: docs, orient, primary -->
 <p align="center">
-  <img src="logo/logo.png" alt="Capsule logo" width="200">
+  <img src="logo/logo.png" alt="Capsule logo" width="320">
 </p>
 
 # Capsule
