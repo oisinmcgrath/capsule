@@ -1,11 +1,11 @@
 <!-- @tagdex: docs, orient, primary -->
-<p align="center">
-  <img src="logo/logo.png" alt="Capsule logo" width="320">
-</p>
-
 # Capsule
 
 **Sandboxed, agent-ready dev containers in one command — DevPod + rootless Podman + VSCodium — for running autonomous AI coding agents (Claude Code, Grok, and friends) safely isolated from your host machine.**
+
+<p align="center">
+  <img src="logo/logo.png" alt="Capsule logo" width="320">
+</p>
 
 **Capsule** is an interactive, host-side installer (`wizard.sh`) that turns any empty folder into a reproducible [devcontainer](https://containers.dev): it generates the `.devcontainer/` (Dockerfile + `devcontainer.json`), wires the agent hooks, deploys a decision log and a persistent task board, picks a non-clashing forwarded port, handles GPU / NPU / iGPU passthrough, sets up host Wayland clipboard passthrough, and **verifies the container actually attaches** before it declares success. No hand-edited placeholders — every value is derived deterministically, and host-specific settings are asked **once** and reused for every future repo.
 
