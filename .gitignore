@@ -4,3 +4,6 @@ node_modules/
 # Never commit: it's a multi-MB base64 bundle that embeds sibling repos.
 capsule-install.sh
 *.tar.gz
+
+# Portfolio landing/privacy/terms pages — not part of the installer, review before publishing.
+site/
