@@ -1,4 +1,8 @@
 <!-- @tagdex: docs, orient, primary -->
+<p align="center">
+  <img src="logo/logo.jpg" alt="Capsule logo" width="200">
+</p>
+
 # Capsule
 
 **Sandboxed, agent-ready dev containers in one command — DevPod + rootless Podman + VSCodium — for running autonomous AI coding agents (Claude Code, Grok, and friends) safely isolated from your host machine.**
