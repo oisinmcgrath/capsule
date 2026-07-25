@@ -158,16 +158,6 @@
       "isFolder": false
     },
     {
-      "path": "Setup-New-Repo.desktop",
-      "tags": [
-        "ancillary",
-        "config",
-        "start"
-      ],
-      "source": "tags-file",
-      "isFolder": false
-    },
-    {
       "path": "tagdexer/AGENT_README.md",
       "tags": [
         "canon",

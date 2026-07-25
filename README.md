@@ -1,32 +1,51 @@
 <!-- @tagdex: docs, orient, primary -->
 # capsule
 
-Stand up a new sandboxed **DevPod + Podman + VSCodium** repo, ready for autonomous agent work, with one command. The wizard scaffolds the devcontainer, installs the generic hooks, deploys tagdexer + a fresh taskboard, wires everything so your **first agent chat auto-onboards**, picks a non-clashing port, handles GPU/CDI, and verifies the container actually attaches before declaring success.
+**One command to scaffold a fully sandboxed, agent-ready dev container — DevPod + rootless Podman + VSCodium — for running autonomous AI coding agents (Claude Code, Grok, and friends) safely isolated from your host machine.**
 
-This replaces the previous placeholder-substitution runbook (manual `<TOKEN>` edits, hand-picked ports). Everything is derived deterministically now.
+`capsule` is an interactive, host-side installer (`wizard.sh`) that turns any empty folder into a reproducible [devcontainer](https://containers.dev): it generates the `.devcontainer/` (Dockerfile + `devcontainer.json`), wires the agent hooks, deploys a decision log and a persistent task board, picks a non-clashing forwarded port, handles GPU / NPU / iGPU passthrough, sets up host Wayland clipboard passthrough, and **verifies the container actually attaches** before it declares success. No hand-edited placeholders — every value is derived deterministically, and host-specific settings are asked **once** and reused for every future repo.
+
+> **Use it when** you want to let an AI agent write code, install packages, and run shell commands with broad permissions **without** handing it your real machine — a disposable, rebuildable, network-isolated container that still opens straight into a VSCodium window.
+
+---
+
+## What this is good for (features & keywords)
+
+- **Sandbox for autonomous AI coding agents** — isolate Claude Code / Grok / any LLM agent in a rootless Podman container so it can run under bypass permissions while the host stays untouched.
+- **Devcontainer generator / scaffolder** — produces a spec-compliant `devcontainer.json` + `Dockerfile` for **DevPod + Podman + VSCodium**; no Docker daemon, no root daemon required.
+- **Deterministic, no-clash setup** — auto-derives the sanitized workspace name, container path, project keys, and the next free forwarded port (≥ 8080) so multiple sandboxed repos never collide.
+- **GPU passthrough for containers** — NVIDIA via CDI (`--device=nvidia.com/gpu=all`), with **automatic CDI-spec version pinning** so it works on Podman 4.x (the classic `unresolvable CDI devices` failure, solved).
+- **NPU & iGPU passthrough** — AMD XDNA / Ryzen AI NPU (`/dev/accel`) and AMD ROCm iGPU (`/dev/dri` + `/dev/kfd`), with the right render/video groups.
+- **Host Wayland clipboard passthrough** — paste a host screenshot (`image/png`, which OSC 52 can't carry) straight into an in-container tool.
+- **Agent-ready on first launch** — installs generic Claude Code hooks, a lightweight decision log (tagdexer), and a persistent task board, all firing on the first chat; Grok agent hooks are mirrored automatically with no duplicate scripts.
+- **First-run machine profile** — host-specific values (container timezone, git author identity) are captured once in `~/.config/capsule/machine.conf` and reused for every repo you scaffold afterwards.
+- **Safe on existing repos** — preserves your code, git history, decision log, and task lists; backs up anything it replaces.
+- **Isolation verified, never `--pid=host`** — sidesteps the `open-remote-ssh` "Could not establish connection" attach failure by construction (details below).
+
+**Topics:** `devcontainer` · `podman` · `devpod` · `vscodium` · `sandbox` · `ai-agents` · `claude-code` · `llm-agent` · `rootless-containers` · `gpu-passthrough` · `nvidia-cdi` · `rocm` · `ryzen-ai` · `developer-tools` · `reproducible-environments`
 
 ---
 
 ## Quick start
 
 ```bash
-# On the HOST (not inside a container):
-cd /home/user/projects/capsule
-mkdir -p /home/user/projects/<new-repo>      # create the empty target repo first
+# Run on the HOST (Linux), not inside a container:
+cd /path/to/capsule
+mkdir -p ~/projects/<new-repo>      # create the empty target repo first
 bash wizard.sh
 ```
 
-Answer the prompts (repo name, GPU?, extra apt). The wizard does the rest and offers to build + open the container at the end.
+Answer the prompts (which repo, GPU/NPU/iGPU?, extra apt packages, display name). On its **first ever run** the wizard also asks for your machine profile — container timezone and the git identity to stamp on scaffolded repos — then saves it and never asks again. It derives everything else and offers to build + open the container at the end.
 
-**GUI mode (default on the desktop):** when a display and `kdialog` or `zenity` are present, the questions appear as dialogs — you browse and click the repo folder instead of typing its name, and confirm the derived values in a yes/no box. kdialog (KDE-native picker) is preferred if installed; zenity is the fallback. Cancel on any dialog aborts. Pass `--no-gui` for the classic terminal prompts. Progress output always prints to the terminal either way.
+**GUI mode (default on the desktop):** when a display and `kdialog` or `zenity` are present, the questions appear as dialogs — you browse and click the repo folder instead of typing its name, and confirm the derived values in a yes/no box. `kdialog` (KDE-native picker) is preferred if installed; `zenity` is the fallback. Cancel on any dialog aborts. Pass `--no-gui` for the classic terminal prompts. Progress always prints to the terminal.
 
 ---
 
-## Why host-side
+## Requirements
 
-The wizard drives `devpod`, `podman`, `nvidia-ctk`, `ssh`, and `sqlite3` — none of which exist inside a devcontainer. **Run it from the host.** It refuses to run if those tools are missing.
+Run it **from the host** — the wizard drives `devpod`, `podman`, `nvidia-ctk`, `ssh`, and `sqlite3`, none of which exist inside a devcontainer. It refuses to run if a required tool is missing.
 
-Requires: `bash`, `jq`, `devpod`, `podman`, `ssh`, `sqlite3` (and `nvidia-ctk` only if you choose GPU).
+Host tools: `bash`, `jq`, `devpod`, `podman`, `ssh`, `sqlite3` (plus `nvidia-ctk` only if you choose GPU). Portable across Linux hosts — nothing host-specific is baked into the script; per-machine values live in the machine profile.
 
 ---
 
@@ -35,20 +54,21 @@ Requires: `bash`, `jq`, `devpod`, `podman`, `ssh`, `sqlite3` (and `nvidia-ctk` o
 ```
 <repo>/
 ├── .devcontainer/
-│   ├── devcontainer.json          # mounts, port, runArgs (GPU device only — never --pid=host)
+│   ├── devcontainer.json          # mounts, port, runArgs (device passthrough only — never --pid=host)
 │   ├── Dockerfile                 # lean baseline + your extra apt
 │   ├── container-claude-settings.json   # bypassPermissions + effortLevel:max
-│   └── post-create.sh             # vsix install, venv, claude settings, memory-bridge symlink
+│   └── post-create.sh             # vsix install, venv, agent settings, memory-bridge symlink
 ├── .claude/
-│   ├── settings.json              # wires the 9 generic hooks (+ taskboard adds 2)
+│   ├── settings.json              # wires the 9 generic hooks (+ task board adds 2)
 │   └── hooks/                     # the 9 generic hooks
-├── tagdexer/                      # CLI deployed; .tagdexerrc -> /workspaces/tagdexer-source
-├── taskboard/                     # fresh, empty board + its 2 hooks wired
-├── CLAUDE.md                      # project stub (no fbad content)
+├── .grok/hooks/                   # Grok agent hooks, mirrored from the Claude set
+├── tagdexer/                      # decision-log CLI; .tagdexerrc -> /workspaces/tagdexer-source
+├── taskboard/                     # fresh, empty task board + its 2 hooks wired
+├── CLAUDE.md                      # project stub (no cross-repo content)
 └── .tagdexerrc                    # genericPath = in-container mount
 ```
 
-Decision log (`tagdexer/decisions.jsonl`) starts **absent** (JSONL: absent == empty). Taskboard starts **empty**. No content from any other repo leaks in.
+Decision log (`tagdexer/decisions.jsonl`) starts **absent** (JSONL: absent == empty). Task board starts **empty**. No content from any other repo leaks in.
 
 ---
 
@@ -58,9 +78,9 @@ Decision log (`tagdexer/decisions.jsonl`) starts **absent** (JSONL: absent == em
 |---|---|---|
 | Sanitized workspace name | strip `_`, keep `-`, lowercase | `llama-worker-agent` |
 | Container path | `/workspaces/<sanitized>` | `/workspaces/llama-worker-agent` |
-| Host project key | `/home/user/projects/<repo>`, `/`+`_`→`-`, leading `-` | `-home-user-projects-llama-worker-agent` |
+| Host project key | absolute repo path, `/` + `_` → `-`, leading `-` | `-home-user-projects-llama-worker-agent` |
 | Container project key | `-workspaces-<sanitized>` | `-workspaces-llama-worker-agent` |
-| Forward port | next free ≥8080 not used by another workspace or bound | `8082` (pickles=8080, fbad=8081) |
+| Forward port | next free ≥ 8080 not used by another workspace or bound | `8082` (e.g. two existing repos hold 8080, 8081) |
 
 ---
 
@@ -70,11 +90,11 @@ The wizard is safe to run on a repo that already has code and history:
 
 | | What happens |
 |---|---|
-| **Preserved** | `CLAUDE.md`, `tagdexer/decisions.jsonl`, `tagdexer/aliases.json`, taskboard `lists/` + `domains.json` (carried across the refresh), `.git` (init skipped) |
-| **Backed up** | `.claude/settings.json` → `settings.json.pre-wizard` (re-merge custom hooks yourself); `.venv` → `.venv_host_backup` (host-built venvs don't run in-container; wizard asks first, post-create rebuilds a broken one regardless) |
-| **Replaced** | `.devcontainer/`, `.claude/hooks/`, taskboard code + hooks, `.tagdexerrc` |
+| **Preserved** | `CLAUDE.md`, `tagdexer/decisions.jsonl`, `tagdexer/aliases.json`, task board `lists/` + `domains.json` (carried across the refresh), `.git` (init skipped) |
+| **Backed up** | `.claude/settings.json` → `settings.json.pre-wizard` (re-merge custom hooks yourself); `.venv` → `.venv_host_backup` (host-built venvs don't run in-container; the wizard asks first, post-create rebuilds a broken one regardless) |
+| **Replaced** | `.devcontainer/`, `.claude/hooks/`, task board code + hooks, `.tagdexerrc` |
 
-The `/workspaces` symlink step now skips sudo entirely when the links are already correct, and prints manual commands instead of dying if sudo is unavailable (e.g. agent-driven runs).
+The `/workspaces` symlink step skips sudo entirely when the links are already correct, and prints manual commands instead of dying if sudo is unavailable (e.g. agent-driven runs).
 
 ---
 
@@ -86,9 +106,9 @@ A container with `--pid=host` sees the **host's** process table. `open-remote-ss
 The wizard emits GPU repos with `runArgs: ["--device=nvidia.com/gpu=all", "--security-opt=label=disable"]` and non-GPU repos with `runArgs: []`. **Never `--pid=host`.**
 
 ### 2. GPU CDI version is probed + auto-pinned
-*(Applies only when you answer GPU = yes, i.e. an NVIDIA host. The current host has no NVIDIA GPU; this logic is retained for the GPU machine and stays dormant on a CPU-only box — you'll simply answer "no" at the prompt and `nvidia-ctk` isn't required.)*
+*(Applies only when you answer GPU = yes, i.e. an NVIDIA host. On a CPU-only box you answer "no" and `nvidia-ctk` isn't required — the logic stays dormant.)*
 
-Podman 4.9.3 parses CDI spec **≤0.6.0**. A driver update can leave `/etc/cdi/nvidia.yaml` at 0.7.0, and `nvidia-ctk` ≥1.17 dropped `--cdi-version` and auto-emits the minimum-required (often 0.7.0+) — so `podman run --device nvidia.com/gpu=all` fails with `unresolvable CDI devices` and the container won't start. The wizard:
+Podman 4.9.3 parses CDI spec **≤ 0.6.0**. A driver update can leave `/etc/cdi/nvidia.yaml` at 0.7.0, and `nvidia-ctk` ≥ 1.17 dropped `--cdi-version` and auto-emits the minimum-required (often 0.7.0+) — so `podman run --device nvidia.com/gpu=all` fails with `unresolvable CDI devices` and the container won't start. The wizard:
 1. probes `podman run … nvidia-smi -L`;
 2. if it fails, regenerates — pinned to `0.6.0` if the flag exists, else plain regen;
 3. **re-verifies end-to-end**, so a silent CPU fallback can't pass;
@@ -96,9 +116,9 @@ Podman 4.9.3 parses CDI spec **≤0.6.0**. A driver update can leave `/etc/cdi/n
 
 ---
 
-## tagdexer in the sandbox (the silent-degrade trap)
+## Decision log in the sandbox (the silent-degrade trap)
 
-The deployed tagdexer CLI reads the **central** source at runtime for shared aliases + `trackdexer.config.json`. If `.tagdexerrc`'s `genericPath` points at a host path (`/home/user/projects/tagdexer`) that doesn't exist inside the container, the CLI **still runs but silently loses the shared layer** (tags show `[project]` not `[shared+project]`). The container bind-mounts central tagdexer at `/workspaces/tagdexer-source`, so the wizard writes `genericPath=/workspaces/tagdexer-source`. The wizard verifies the shared layer is active after build.
+The deployed [tagdexer](tagdexer/AGENT_README.md) decision-log CLI reads a **central** source at runtime for its shared aliases + config. If `.tagdexerrc`'s `genericPath` points at a **host** path that doesn't exist inside the container, the CLI **still runs but silently loses the shared layer** (tags show `[project]` not `[shared+project]`). The container bind-mounts the central source at `/workspaces/tagdexer-source`, so the wizard writes `genericPath=/workspaces/tagdexer-source` and verifies the shared layer is active after build.
 
 ---
 
@@ -106,22 +126,22 @@ The deployed tagdexer CLI reads the **central** source at runtime for shared ali
 
 | Symptom | Cause / fix |
 |---|---|
-| `unresolvable CDI devices nvidia.com/gpu=all` | CDI spec version > Podman's ceiling. Regen at ≤0.6.0; if toolkit can't pin, downgrade to `nvidia-container-toolkit=1.16.2-1` and re-run wizard GPU step. |
+| `unresolvable CDI devices nvidia.com/gpu=all` | CDI spec version > Podman's ceiling. Regen at ≤ 0.6.0; if the toolkit can't pin, downgrade to `nvidia-container-toolkit=1.16.2-1` and re-run the wizard GPU step. |
 | Window: "Could not establish connection" / "install vscode server non-zero" while **plain ssh works** | Almost always `--pid=host` in runArgs → open-remote-ssh false-positives on another container's server. Remove it. The wizard never adds it; if an old repo has it, delete the line and **recreate via Command-Palette → DevPod: Recreate** (CLI `--recreate` caches the old config). |
 | Title bar shows the **wrong** `.devpod` host | Cosmetic stale label cache. `sqlite3 ~/.config/VSCodium/User/globalStorage/state.vscdb "DELETE FROM ItemTable WHERE key='memento/cachedResourceLabelFormatters2';"` Trust `hostname` in the container terminal, not the title. |
 | `Error port forwarding NNNN: address already in use` | Another process holds the port. The wizard picks a free one; if a clash appears later, find it with `ss -ltnp 'sport = :NNNN'`. |
-| tagdexer tags show `[project]` only | `genericPath` not resolving in-container. Check `.tagdexerrc` = `/workspaces/tagdexer-source` and that the mount exists. |
+| Decision-log tags show `[project]` only | `genericPath` not resolving in-container. Check `.tagdexerrc` = `/workspaces/tagdexer-source` and that the mount exists. |
 | Editing `.devcontainer/` blocked by the protect hook | `mv .claude/hooks/protect_devcontainer.sh{,.disabled}` → edit → move back. Bash dodges the `Edit\|Write` matcher. |
 | `devpod up --recreate` keeps old runArgs | DevPod cached the parsed config. Use Command-Palette **DevPod: Recreate**, or `devpod delete <name> --force && devpod up <name> --ide codium`. |
-| Grok/tools: "Couldn't read clipboard contents" on image paste | Host Wayland clipboard not reaching the container. See **Host clipboard passthrough** below. |
+| Agent/tool: "Couldn't read clipboard contents" on image paste | Host Wayland clipboard not reaching the container. See **Host clipboard passthrough** below. |
 
 ---
 
 ## Host clipboard passthrough (image paste into in-container tools)
 
-So an agent/tool running **inside** the container (e.g. Grok) can `Ctrl+V` a host screenshot — `image/png`, which OSC 52 can't carry — the wizard bind-mounts the host **runtime directory** (`$XDG_RUNTIME_DIR`) to `/run/host-xdg/` — the whole dir, NOT the single `wayland-0` file, so a logout/login or compositor restart (which makes a fresh socket) doesn't leave the container bound to a dead one — and sets `WAYLAND_DISPLAY` + `DBUS_SESSION_BUS_ADDRESS` (pointing into that dir) in `containerEnv`. `wl-clipboard` is baked into the image. `--security-opt=label=disable` lets the container open the sockets under SELinux (same relaxation used for accel devices). No `--userns` needed — DevPod's podman provider already maps host uid 1000 → container `vscode`, so the socket is owned by `vscode` inside.
+So an agent/tool running **inside** the container can `Ctrl+V` a host screenshot — `image/png`, which OSC 52 can't carry — the wizard bind-mounts the host **runtime directory** (`$XDG_RUNTIME_DIR`) to `/run/host-xdg/` — the whole dir, NOT the single `wayland-0` file, so a logout/login or compositor restart (which makes a fresh socket) doesn't leave the container bound to a dead one — and sets `WAYLAND_DISPLAY` + `DBUS_SESSION_BUS_ADDRESS` (pointing into that dir) in `containerEnv`. `wl-clipboard` is baked into the image. `--security-opt=label=disable` lets the container open the sockets under SELinux (same relaxation used for accel devices). No `--userns` needed — DevPod's podman provider already maps host uid 1000 → container `vscode`, so the socket is owned by `vscode` inside.
 
-**Requirement:** launch the IDE / run the wizard **from the graphical KDE session**, so `WAYLAND_DISPLAY` + `XDG_RUNTIME_DIR` exist at container-create time. If they're absent, the wizard **skips** the mounts and warns (no broken bind) — clipboard passthrough is simply disabled until you re-run from a graphical session.
+**Requirement:** launch the IDE / run the wizard **from the graphical session**, so `WAYLAND_DISPLAY` + `XDG_RUNTIME_DIR` exist at container-create time. If they're absent, the wizard **skips** the mounts and warns (no broken bind) — clipboard passthrough is simply disabled until you re-run from a graphical session.
 
 **Verify inside the container** (with an image on the host clipboard):
 ```bash
@@ -131,8 +151,16 @@ If it prints "failed to connect": check the `wayland-0` mount and that `label=di
 
 ---
 
-## Maintaining the payload
+## How it fits together (architecture)
 
-When you improve a generic hook in a live repo, copy it into `payload/claude_hooks/` to canonicalize it. The two `block_*` hooks (`block_pip_install`, `block_git_writes`) are deliberately **excluded** from the generic set.
+- **`wizard.sh`** — the host-side installer. Interactive: asks the per-repo questions, derives the rest, scaffolds, builds, verifies.
+- **`payload/`** — the canonical source it installs *from*: the generic `.claude` hooks and a pristine task board.
+- **`tagdexer/`** — the decision-log + tag-index CLI (mounted into the container, not vendored, so new repos always get the current version).
 
-tagdexer is **not** vendored here — it is mounted at build time from the central `tagdexer/` sibling of this wizard (here `/home/user/projects/tagdexer`; overridable via `$CENTRAL_TAGDEXER`), so new repos always get the current central version. Taskboard **is** vendored (`payload/taskboard/`) because it is self-contained; refresh it when taskboard improves.
+When you improve a generic hook in a live repo, copy it into `payload/claude_hooks/` to canonicalize it. The two `block_*` hooks (`block_pip_install`, `block_git_writes`) are deliberately **excluded** from the generic set. The task board **is** vendored (`payload/taskboard/`) because it is self-contained; refresh it when the task board improves. tagdexer is mounted at build time from the central `tagdexer/` sibling of this wizard (overridable via `$CENTRAL_TAGDEXER`).
+
+---
+
+## License
+
+See [tagdexer/LICENSE](tagdexer/LICENSE) for the bundled decision-log CLI. Add a top-level `LICENSE` for the wizard itself before publishing.
