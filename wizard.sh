@@ -40,10 +40,14 @@ PAYLOAD="$WIZ_DIR/payload"
 # clone under any path works with zero edits. Override any of these via env if
 # your layout differs. tagdexer/ and setsquare/ must be siblings of the wizard.
 REPOS_ROOT="${REPOS_ROOT:-$(dirname "$WIZ_DIR")}"
-# tagdexer source of truth: an explicit $CENTRAL_TAGDEXER wins; else a sibling
-# checkout (multi-repo layout) if present; else the copy vendored inside this
-# repo — so a standalone clone is self-contained and needs no sibling.
-if   [ -n "${CENTRAL_TAGDEXER:-}" ]; then :
+# tagdexer/setsquare source resolution. Priority: an explicit $CENTRAL_* env var
+# wins; else the machine profile's saved path (asked on first run, below); else a
+# sibling checkout; else — for tagdexer — the copy vendored inside this repo, so a
+# standalone clone is self-contained. Capture the env override now; the profile
+# refines these after preflight.
+CENTRAL_TAGDEXER_ENV="${CENTRAL_TAGDEXER:-}"
+CENTRAL_SETSQUARE_ENV="${CENTRAL_SETSQUARE:-}"
+if   [ -n "$CENTRAL_TAGDEXER_ENV" ]; then :
 elif [ -d "$REPOS_ROOT/tagdexer" ]; then CENTRAL_TAGDEXER="$REPOS_ROOT/tagdexer"
 else CENTRAL_TAGDEXER="$WIZ_DIR/tagdexer"; fi
 # setsquare is an OPTIONAL external sibling; its mount/symlink are skipped when absent.
@@ -145,6 +149,7 @@ ok "host tools present"
 step "Machine profile"
 MACHINE_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/capsule/machine.conf"
 MACHINE_TZ=""; MACHINE_GIT_NAME=""; MACHINE_GIT_EMAIL=""; TAGDEXER_MODE=""
+MACHINE_TAGDEXER_PATH=""; MACHINE_SETSQUARE_PATH=""
 # shellcheck source=/dev/null
 [ -f "$MACHINE_CONF" ] && . "$MACHINE_CONF"
 
@@ -175,6 +180,41 @@ if [ -z "${TAGDEXER_MODE:-}" ]; then
   esac
   _conf_new=1
 fi
+if [ -z "${MACHINE_TAGDEXER_PATH:-}" ]; then
+  if [ "$TAGDEXER_MODE" = never ]; then
+    MACHINE_TAGDEXER_PATH="$WIZ_DIR/tagdexer"       # unused while 'never', but records a value
+  else
+    _guess=""
+    [ -d "$REPOS_ROOT/tagdexer" ] && _guess="$REPOS_ROOT/tagdexer"
+    [ -z "$_guess" ] && [ -d "$WIZ_DIR/tagdexer" ] && _guess="$WIZ_DIR/tagdexer"
+    if ask_yn "Do you already have tagdexer installed on this host?" "$([ -n "$_guess" ] && echo y || echo n)"; then
+      MACHINE_TAGDEXER_PATH="$(ask "Path to your tagdexer checkout" "$_guess")"
+    elif ask_yn "Clone tagdexer now from github.com/oisinmcgrath/tagdexer?" y; then
+      _dst="$(ask "Clone tagdexer to" "$HOME/projects/tagdexer")"
+      mkdir -p "$(dirname "$_dst")"
+      if [ -d "$_dst/.git" ]; then
+        warn "already a git checkout at $_dst — using it"; MACHINE_TAGDEXER_PATH="$_dst"
+      elif git clone --depth 1 https://github.com/oisinmcgrath/tagdexer "$_dst"; then
+        ok "cloned tagdexer -> $_dst"; MACHINE_TAGDEXER_PATH="$_dst"
+      else
+        warn "clone failed — using the copy vendored in this wizard"; MACHINE_TAGDEXER_PATH="$WIZ_DIR/tagdexer"
+      fi
+    else
+      say "  Get it later at https://github.com/oisinmcgrath/tagdexer"
+      MACHINE_TAGDEXER_PATH="$WIZ_DIR/tagdexer"     # vendored fallback keeps the wizard working
+    fi
+  fi
+  _conf_new=1
+fi
+if [ -z "${MACHINE_SETSQUARE_PATH:-}" ]; then
+  _guess=""; [ -d "$REPOS_ROOT/setsquare" ] && _guess="$REPOS_ROOT/setsquare"
+  if ask_yn "Do you have setsquare installed (optional)?" "$([ -n "$_guess" ] && echo y || echo n)"; then
+    MACHINE_SETSQUARE_PATH="$(ask "Path to your setsquare checkout" "$_guess")"
+  else
+    MACHINE_SETSQUARE_PATH="-"                       # sentinel: none — skip its mount/symlink
+  fi
+  _conf_new=1
+fi
 if [ "$_conf_new" = 1 ]; then
   mkdir -p "$(dirname "$MACHINE_CONF")"
   {
@@ -183,12 +223,29 @@ if [ "$_conf_new" = 1 ]; then
     printf 'MACHINE_TZ=%q\n'        "$MACHINE_TZ"
     printf 'MACHINE_GIT_NAME=%q\n'  "$MACHINE_GIT_NAME"
     printf 'MACHINE_GIT_EMAIL=%q\n' "$MACHINE_GIT_EMAIL"
-    printf 'TAGDEXER_MODE=%q\n'     "$TAGDEXER_MODE"
+    printf 'TAGDEXER_MODE=%q\n'          "$TAGDEXER_MODE"
+    printf 'MACHINE_TAGDEXER_PATH=%q\n'  "$MACHINE_TAGDEXER_PATH"
+    printf 'MACHINE_SETSQUARE_PATH=%q\n' "$MACHINE_SETSQUARE_PATH"
   } > "$MACHINE_CONF"
   ok "machine profile saved -> $MACHINE_CONF (reused for every future repo; edit/delete to change)"
 else
-  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>, tagdexer=$TAGDEXER_MODE)"
+  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>, tagdexer=$TAGDEXER_MODE @ $MACHINE_TAGDEXER_PATH)"
 fi
+
+# Apply the machine-profile paths (an explicit $CENTRAL_* env var still wins),
+# then guarantee tagdexer resolves to a real dir (vendored fallback if the saved
+# path is gone), and honour the setsquare 'none' sentinel ("-" or empty).
+if [ -z "$CENTRAL_TAGDEXER_ENV" ] && [ -n "${MACHINE_TAGDEXER_PATH:-}" ]; then CENTRAL_TAGDEXER="$MACHINE_TAGDEXER_PATH"; fi
+# A missing NON-env path (saved profile path deleted/moved) → vendored fallback;
+# an explicit env path is left as-is so a typo surfaces at deploy time, not silently.
+if [ ! -d "$CENTRAL_TAGDEXER" ] && [ -z "$CENTRAL_TAGDEXER_ENV" ]; then CENTRAL_TAGDEXER="$WIZ_DIR/tagdexer"; fi
+if [ -z "$CENTRAL_SETSQUARE_ENV" ]; then
+  case "${MACHINE_SETSQUARE_PATH:-}" in
+    ""|-) CENTRAL_SETSQUARE="" ;;
+    *)    CENTRAL_SETSQUARE="$MACHINE_SETSQUARE_PATH" ;;
+  esac
+fi
+ok "tagdexer source: $CENTRAL_TAGDEXER${CENTRAL_SETSQUARE:+ · setsquare source: $CENTRAL_SETSQUARE}"
 
 # ---------------------------------------------------------------------------
 # 1. interactive inputs
