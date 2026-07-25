@@ -129,6 +129,50 @@ for t in jq devpod podman ssh sqlite3; do command -v "$t" >/dev/null 2>&1 || die
 ok "host tools present; central tagdexer found"
 
 # ---------------------------------------------------------------------------
+# 0b. Machine profile — settings that belong to THIS host + owner, not to any
+# one repo (container timezone; the git identity stamped on scaffolded repos).
+# Asked once on the first run, saved under $XDG_CONFIG_HOME, then reused
+# silently for every future repo. Edit or delete the file to change them; a
+# newly added key re-prompts for only that key. This is what keeps the wizard
+# portable — no host-specific value is baked into the script.
+# ---------------------------------------------------------------------------
+step "Machine profile"
+MACHINE_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/capsule/machine.conf"
+MACHINE_TZ=""; MACHINE_GIT_NAME=""; MACHINE_GIT_EMAIL=""
+# shellcheck source=/dev/null
+[ -f "$MACHINE_CONF" ] && . "$MACHINE_CONF"
+
+_conf_new=0
+if [ -z "${MACHINE_TZ:-}" ]; then
+  _d="$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || true)"
+  MACHINE_TZ="$(ask "Container timezone (IANA name, e.g. Europe/Dublin)" "${_d:-UTC}")"
+  _conf_new=1
+fi
+if [ -z "${MACHINE_GIT_NAME:-}" ]; then
+  _d="$(git config --global user.name 2>/dev/null || true)"
+  MACHINE_GIT_NAME="$(ask "Git author name to stamp on scaffolded repos" "${_d:-owner}")"
+  _conf_new=1
+fi
+if [ -z "${MACHINE_GIT_EMAIL:-}" ]; then
+  _d="$(git config --global user.email 2>/dev/null || true)"
+  MACHINE_GIT_EMAIL="$(ask "Git author email to stamp on scaffolded repos" "${_d:-owner@local}")"
+  _conf_new=1
+fi
+if [ "$_conf_new" = 1 ]; then
+  mkdir -p "$(dirname "$MACHINE_CONF")"
+  {
+    printf '# capsule machine profile — per-host settings, asked once and\n'
+    printf '# reused for every repo scaffolded on this machine. Edit or delete to change.\n'
+    printf 'MACHINE_TZ=%q\n'        "$MACHINE_TZ"
+    printf 'MACHINE_GIT_NAME=%q\n'  "$MACHINE_GIT_NAME"
+    printf 'MACHINE_GIT_EMAIL=%q\n' "$MACHINE_GIT_EMAIL"
+  } > "$MACHINE_CONF"
+  ok "machine profile saved -> $MACHINE_CONF (reused for every future repo; edit/delete to change)"
+else
+  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>)"
+fi
+
+# ---------------------------------------------------------------------------
 # 1. interactive inputs
 # ---------------------------------------------------------------------------
 step "Project questions"
@@ -418,7 +462,7 @@ cat > "$DC/devcontainer.json" <<JSON
     "source=$HOST_CLAUDE_PROJECTS,target=/home/vscode/.claude-host-projects,type=bind,consistency=cached",
     "source=$(dirname "$HOST_CLAUDE_PROJECTS")/.credentials.json,target=/home/vscode/.claude/.credentials.json,type=bind,consistency=cached"$WL_MOUNT_LINES$NEEDS_VOL_LINES
   ],
-  "containerEnv": { "CLAUDE_CONFIG_DIR": "/home/vscode/.claude", "TZ": "UTC"$WL_ENV_LINES$NEEDS_ENV_LINES },
+  "containerEnv": { "CLAUDE_CONFIG_DIR": "/home/vscode/.claude", "TZ": "$MACHINE_TZ"$WL_ENV_LINES$NEEDS_ENV_LINES },
   "containerUser": "vscode",
   "remoteUser": "vscode",
   "customizations": {
@@ -843,7 +887,7 @@ fi
 # ---------------------------------------------------------------------------
 if [ "$WANT_GIT" = y ] && [ ! -d "$HOST_REPO_PATH/.git" ]; then
   step "git init"
-  ( cd "$HOST_REPO_PATH" && git init -q && git add -A && git -c user.name=owner -c user.email=owner@local commit -qm "Containerised scaffold (capsule)" )
+  ( cd "$HOST_REPO_PATH" && git init -q && git add -A && git -c user.name="$MACHINE_GIT_NAME" -c user.email="$MACHINE_GIT_EMAIL" commit -qm "Containerised scaffold (capsule)" )
   ok "git initialised + first commit"
 fi
 
