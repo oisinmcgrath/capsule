@@ -164,4 +164,4 @@ When you improve a generic hook in a live repo, copy it into `payload/claude_hoo
 
 ## License
 
-See [tagdexer/LICENSE](tagdexer/LICENSE) for the bundled decision-log CLI. Add a top-level `LICENSE` for the wizard itself before publishing.
+[MIT](LICENSE) © 2026 Oisin McGrath. The bundled tagdexer decision-log CLI is also MIT ([tagdexer/LICENSE](tagdexer/LICENSE)).
