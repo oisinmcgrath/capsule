@@ -40,7 +40,13 @@ PAYLOAD="$WIZ_DIR/payload"
 # clone under any path works with zero edits. Override any of these via env if
 # your layout differs. tagdexer/ and setsquare/ must be siblings of the wizard.
 REPOS_ROOT="${REPOS_ROOT:-$(dirname "$WIZ_DIR")}"
-CENTRAL_TAGDEXER="${CENTRAL_TAGDEXER:-$REPOS_ROOT/tagdexer}"   # source of truth for tagdexer deploy
+# tagdexer source of truth: an explicit $CENTRAL_TAGDEXER wins; else a sibling
+# checkout (multi-repo layout) if present; else the copy vendored inside this
+# repo — so a standalone clone is self-contained and needs no sibling.
+if   [ -n "${CENTRAL_TAGDEXER:-}" ]; then :
+elif [ -d "$REPOS_ROOT/tagdexer" ]; then CENTRAL_TAGDEXER="$REPOS_ROOT/tagdexer"
+else CENTRAL_TAGDEXER="$WIZ_DIR/tagdexer"; fi
+# setsquare is an OPTIONAL external sibling; its mount/symlink are skipped when absent.
 CENTRAL_SETSQUARE="${CENTRAL_SETSQUARE:-$REPOS_ROOT/setsquare}"
 HOST_CLAUDE_PROJECTS="${HOST_CLAUDE_PROJECTS:-$HOME/.claude/projects}"
 
@@ -124,9 +130,9 @@ fi
 step "Preflight"
 [ -d "$PAYLOAD" ] || die "payload/ not found next to wizard.sh — run from the wizard repo."
 for t in jq devpod podman ssh sqlite3; do command -v "$t" >/dev/null 2>&1 || die "missing required host tool: $t"; done
-[ -d "$CENTRAL_TAGDEXER" ] || die "central tagdexer not found at $CENTRAL_TAGDEXER (tagdexer deploy + runtime depend on it)."
-[ -f "$CENTRAL_TAGDEXER/trackdexer.config.json" ] || warn "central tagdexer missing trackdexer.config.json — shared config layer will be unavailable."
-ok "host tools present; central tagdexer found"
+[ -d "$CENTRAL_TAGDEXER" ] || warn "tagdexer source not found at $CENTRAL_TAGDEXER — deploy will be unavailable (fine if you choose not to deploy it)."
+[ -d "$CENTRAL_TAGDEXER" ] && [ ! -f "$CENTRAL_TAGDEXER/trackdexer.config.json" ] && warn "tagdexer missing trackdexer.config.json — shared config layer will be unavailable."
+ok "host tools present"
 
 # ---------------------------------------------------------------------------
 # 0b. Machine profile — settings that belong to THIS host + owner, not to any
@@ -138,7 +144,7 @@ ok "host tools present; central tagdexer found"
 # ---------------------------------------------------------------------------
 step "Machine profile"
 MACHINE_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/capsule/machine.conf"
-MACHINE_TZ=""; MACHINE_GIT_NAME=""; MACHINE_GIT_EMAIL=""
+MACHINE_TZ=""; MACHINE_GIT_NAME=""; MACHINE_GIT_EMAIL=""; TAGDEXER_MODE=""
 # shellcheck source=/dev/null
 [ -f "$MACHINE_CONF" ] && . "$MACHINE_CONF"
 
@@ -158,6 +164,17 @@ if [ -z "${MACHINE_GIT_EMAIL:-}" ]; then
   MACHINE_GIT_EMAIL="$(ask "Git author email to stamp on scaffolded repos" "${_d:-owner@local}")"
   _conf_new=1
 fi
+if [ -z "${TAGDEXER_MODE:-}" ]; then
+  # Default policy for deploying the tagdexer decision-log into each repo:
+  #   always = deploy every run · never = never deploy · ask = prompt per run.
+  _d="$(ask "Deploy the tagdexer decision-log into repos? (always/never/ask)" "always")"
+  case "$(printf '%s' "$_d" | tr '[:upper:]' '[:lower:]')" in
+    never|no|n) TAGDEXER_MODE=never ;;
+    ask)        TAGDEXER_MODE=ask ;;
+    *)          TAGDEXER_MODE=always ;;
+  esac
+  _conf_new=1
+fi
 if [ "$_conf_new" = 1 ]; then
   mkdir -p "$(dirname "$MACHINE_CONF")"
   {
@@ -166,10 +183,11 @@ if [ "$_conf_new" = 1 ]; then
     printf 'MACHINE_TZ=%q\n'        "$MACHINE_TZ"
     printf 'MACHINE_GIT_NAME=%q\n'  "$MACHINE_GIT_NAME"
     printf 'MACHINE_GIT_EMAIL=%q\n' "$MACHINE_GIT_EMAIL"
+    printf 'TAGDEXER_MODE=%q\n'     "$TAGDEXER_MODE"
   } > "$MACHINE_CONF"
   ok "machine profile saved -> $MACHINE_CONF (reused for every future repo; edit/delete to change)"
 else
-  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>)"
+  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>, tagdexer=$TAGDEXER_MODE)"
 fi
 
 # ---------------------------------------------------------------------------
@@ -296,6 +314,15 @@ if [ -n "${REPO_NEEDS_JSON//[[:space:]]/}" ]; then
 fi
 WANT_GIT=y;  ask_yn "git init the repo if not already a git repo?" y || WANT_GIT=n
 
+# tagdexer deploy for THIS run, per the machine-profile policy (always/never/ask).
+DEPLOY_TAGDEXER=y
+case "$TAGDEXER_MODE" in
+  never) DEPLOY_TAGDEXER=n ;;
+  ask)   DEPLOY_TAGDEXER=n; ask_yn "Deploy the tagdexer decision-log into this repo?" y && DEPLOY_TAGDEXER=y ;;
+esac
+# tagdexer requested but no source to deploy from → fail fast rather than half-scaffold.
+[ "$DEPLOY_TAGDEXER" = y ] && [ ! -d "$CENTRAL_TAGDEXER" ] && die "tagdexer deploy requested but its source is missing at $CENTRAL_TAGDEXER (set \$CENTRAL_TAGDEXER, or choose 'never')."
+
 # ---------------------------------------------------------------------------
 # 2. derive everything (sanitization + project keys + non-clashing port)
 # ---------------------------------------------------------------------------
@@ -342,6 +369,7 @@ say "  NPU ................... $WANT_NPU   (AMD XDNA / Ryzen AI, /dev/accel/acce
 say "  iGPU (ROCm) .......... $WANT_IGPU   (/dev/dri + /dev/kfd, video+render groups)"
 say "  extra apt ............. ${EXTRA_APT:-(none)}"
 say "  repo needs (pasted) .. $NEEDS_SUMMARY"
+say "  tagdexer ............. $DEPLOY_TAGDEXER   (policy: $TAGDEXER_MODE)"
 if [ -n "$GUI_TOOL" ]; then
   ask_yn "Proceed with these derived values?
 
@@ -450,6 +478,22 @@ if [ "${#RUN_ARGS_PARTS[@]}" -gt 0 ]; then
   RUN_ARGS="$(printf '%s, ' "${RUN_ARGS_PARTS[@]}")"; RUN_ARGS="${RUN_ARGS%, }"
 fi
 
+# Sister-repo mounts + editor settings — tagdexer only when we're deploying it,
+# setsquare only when that sibling exists on this host. Both optional, so a
+# standalone clone with neither still yields a valid container. Leading-comma
+# style (like WL_MOUNT_LINES) so an empty set collapses cleanly.
+SISTER_MOUNT_LINES=""; SISTER_SETTINGS=""
+if [ "$DEPLOY_TAGDEXER" = y ]; then
+  SISTER_MOUNT_LINES="$SISTER_MOUNT_LINES,
+    \"source=$CENTRAL_TAGDEXER,target=/workspaces/tagdexer-source,type=bind,consistency=cached\""
+  SISTER_SETTINGS="\"tagdexer.sourcePath\": \"/workspaces/tagdexer-source\""
+fi
+if [ -d "$CENTRAL_SETSQUARE" ]; then
+  SISTER_MOUNT_LINES="$SISTER_MOUNT_LINES,
+    \"source=$CENTRAL_SETSQUARE,target=/workspaces/setsquare-source,type=bind,consistency=cached\""
+  SISTER_SETTINGS="${SISTER_SETTINGS:+$SISTER_SETTINGS, }\"setsquare.hostRepoPath\": \"/workspaces/setsquare-source\""
+fi
+
 cat > "$DC/devcontainer.json" <<JSON
 {
   "name": "$DISPLAY_NAME (containerized)",
@@ -457,20 +501,15 @@ cat > "$DC/devcontainer.json" <<JSON
   "runArgs": [ $RUN_ARGS ],
   "mounts": [
     "source=claude-code-config-\${devcontainerId},target=/home/vscode/.claude,type=volume",
-    "source=$CENTRAL_TAGDEXER,target=/workspaces/tagdexer-source,type=bind,consistency=cached",
-    "source=$CENTRAL_SETSQUARE,target=/workspaces/setsquare-source,type=bind,consistency=cached",
     "source=$HOST_CLAUDE_PROJECTS,target=/home/vscode/.claude-host-projects,type=bind,consistency=cached",
-    "source=$(dirname "$HOST_CLAUDE_PROJECTS")/.credentials.json,target=/home/vscode/.claude/.credentials.json,type=bind,consistency=cached"$WL_MOUNT_LINES$NEEDS_VOL_LINES
+    "source=$(dirname "$HOST_CLAUDE_PROJECTS")/.credentials.json,target=/home/vscode/.claude/.credentials.json,type=bind,consistency=cached"$SISTER_MOUNT_LINES$WL_MOUNT_LINES$NEEDS_VOL_LINES
   ],
   "containerEnv": { "CLAUDE_CONFIG_DIR": "/home/vscode/.claude", "TZ": "$MACHINE_TZ"$WL_ENV_LINES$NEEDS_ENV_LINES },
   "containerUser": "vscode",
   "remoteUser": "vscode",
   "customizations": {
     "vscode": {
-      "settings": {
-        "tagdexer.sourcePath": "/workspaces/tagdexer-source",
-        "setsquare.hostRepoPath": "/workspaces/setsquare-source"
-      },
+      "settings": { $SISTER_SETTINGS },
       "extensions": []
     }
   },
@@ -652,6 +691,9 @@ ok ".claude/settings.json wired (taskboard adds its 2 hooks next)"
 # 5. deploy tagdexer (CLI files in-repo; .tagdexerrc -> in-CONTAINER path)
 # ---------------------------------------------------------------------------
 step "Deploy tagdexer"
+if [ "$DEPLOY_TAGDEXER" != y ]; then
+  ok "tagdexer deploy skipped (policy: $TAGDEXER_MODE) — no tagdexer/ or .tagdexerrc written"
+else
 TD="$HOST_REPO_PATH/tagdexer"
 mkdir -p "$TD/shared"
 for f in indexer.js tracker.js decisions.schema.json package.json LICENSE AGENT_README.md README.md CHANGELOG.md; do
@@ -671,6 +713,7 @@ genericPath=/workspaces/tagdexer-source
 RC
 # decisions.jsonl: do NOT create. Absent == empty (it's JSONL, not a JSON array).
 ok "tagdexer CLI deployed; .tagdexerrc -> /workspaces/tagdexer-source; empty decision log (absent)"
+fi
 
 # ---------------------------------------------------------------------------
 # 6. deploy a FRESH taskboard (self-contained; its installer wires 2 hooks)
@@ -771,9 +814,17 @@ Container-side operations: agents run autonomously.
 Host-side operations (browser apps, owner-interactive tools): agents cannot act autonomously. Supply the command as a pasteable code block; the owner runs it host-side and returns the output. Container paths (\`/workspaces/$SANITIZED/...\`) resolve on the host as-is via symlink; if a path fails to resolve there, substitute the \`$HOST_REPO_PATH/\` prefix. Agents assist, not act.
 MD
 )"
+# CLAUDE.md wording adapts to whether tagdexer was deployed into this repo.
+if [ "$DEPLOY_TAGDEXER" = y ]; then
+  CM_FIRST='**First action: read [tagdexer/AGENT_README.md](tagdexer/AGENT_README.md) in full.** Use tagdex as your primary navigation. (Onboarding + trackdexer protocol are injected by the SessionStart hook.)'
+  CM_DECISIONS='**CLAUDE.md is orientation only.** Decisions never go in markdown — `node tagdexer/tracker.js --add` for every architectural choice, finding, dead-end, or handoff. Pending work lives in the taskboard (`node taskboard/taskboard.js --help`).'
+else
+  CM_FIRST='**First action: read this file, then run `node taskboard/taskboard.js --help` for pending work.**'
+  CM_DECISIONS='**CLAUDE.md is orientation only.** Pending work lives in the taskboard (`node taskboard/taskboard.js --help`).'
+fi
 if [ ! -f "$HOST_REPO_PATH/CLAUDE.md" ]; then
 cat > "$HOST_REPO_PATH/CLAUDE.md" <<MD
-**First action: read [tagdexer/AGENT_README.md](tagdexer/AGENT_README.md) in full.** Use tagdex as your primary navigation. (Onboarding + trackdexer protocol are injected by the SessionStart hook.)
+$CM_FIRST
 
 # $REPO_NAME
 
@@ -781,7 +832,7 @@ cat > "$HOST_REPO_PATH/CLAUDE.md" <<MD
 
 ## Invariant — read first
 
-**CLAUDE.md is orientation only.** Decisions never go in markdown — \`node tagdexer/tracker.js --add\` for every architectural choice, finding, dead-end, or handoff. Pending work lives in the taskboard (\`node taskboard/taskboard.js --help\`).
+$CM_DECISIONS
 
 ## Workflow
 
@@ -804,11 +855,9 @@ step "Host /workspaces symlinks"
 # Only reach for sudo when a link is missing/wrong; if sudo is unavailable
 # (non-interactive run), print the manual commands and carry on — the links
 # are host-side convenience, not required by the container build.
-LINKS=(
-  "/workspaces/$SANITIZED|$HOST_REPO_PATH"
-  "/workspaces/tagdexer-source|$CENTRAL_TAGDEXER"
-  "/workspaces/setsquare-source|$CENTRAL_SETSQUARE"
-)
+LINKS=( "/workspaces/$SANITIZED|$HOST_REPO_PATH" )
+[ "$DEPLOY_TAGDEXER" = y ] && LINKS+=( "/workspaces/tagdexer-source|$CENTRAL_TAGDEXER" )
+[ -d "$CENTRAL_SETSQUARE" ] && LINKS+=( "/workspaces/setsquare-source|$CENTRAL_SETSQUARE" )
 missing=()
 for l in "${LINKS[@]}"; do
   [ "$(readlink "${l%%|*}" 2>/dev/null)" = "${l##*|}" ] || missing+=("$l")
@@ -920,10 +969,12 @@ if ask_yn "Build + open the container now (devpod up --ide codium)?" y; then
   else
     warn "could not confirm isolation over ssh (container may still be starting)"
   fi
+  if [ "$DEPLOY_TAGDEXER" = y ]; then
   if ssh "$SANITIZED.devpod" 'node /workspaces/'"$SANITIZED"'/tagdexer/indexer.js --list-tags 2>/dev/null | grep -qi shared && echo SHARED || echo LOCAL-ONLY' 2>/dev/null | grep -q SHARED; then
     ok "tagdexer shared-vocabulary layer ACTIVE in container"
   else
     warn "tagdexer shared layer not confirmed — check .tagdexerrc genericPath + tagdexer-source mount"
+  fi
   fi
   if [ "$WANT_NPU" = y ]; then
     if ssh "$SANITIZED.devpod" 'test -e /dev/accel/accel0 && echo NPU-OK || echo NPU-MISSING' 2>/dev/null | grep -q NPU-OK; then
