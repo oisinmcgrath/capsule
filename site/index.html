@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Capsule — a host-side installer that scaffolds sandboxed DevPod + Podman + VSCodium dev containers for autonomous AI coding agents.">
+  <title>Capsule</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <img class="logo" src="../logo/logo.png" alt="Capsule logo">
+      <h1>Capsule</h1>
+      <p class="tagline">
+        Sandboxed, agent-ready dev containers in one command — DevPod + rootless
+        Podman + VSCodium — for running autonomous AI coding agents safely
+        isolated from your host machine.
+      </p>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="terms.html">Terms of use</a>
+        <a href="https://github.com/oisinmcgrath/capsule">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <p class="lead">
+        <strong>Capsule</strong> is an interactive, host-side installer
+        (<code>wizard.sh</code>) that turns any empty folder into a reproducible
+        devcontainer: it generates the <code>.devcontainer/</code> config, wires
+        up agent hooks, deploys a decision log and a persistent task board,
+        handles GPU/NPU/iGPU passthrough, and verifies the container actually
+        attaches before it declares success.
+      </p>
+
+      <section class="card" aria-labelledby="use-heading">
+        <h2 id="use-heading">Use it when</h2>
+        <p>
+          You want to let an AI agent write code, install packages, and run
+          shell commands with broad permissions <strong>without</strong> handing
+          it your real machine — a disposable, rebuildable, network-isolated
+          container that still opens straight into a VSCodium window.
+        </p>
+        <ul>
+          <li>Sandbox for Claude Code, Grok, or any LLM coding agent</li>
+          <li>No Docker daemon, no root daemon — rootless Podman only</li>
+          <li>Deterministic setup: no clashing ports, names, or paths</li>
+          <li>NVIDIA / AMD GPU, NPU, and iGPU passthrough, auto-configured</li>
+        </ul>
+        <p>
+          <a href="https://github.com/oisinmcgrath/capsule"><strong>Source & full docs on GitHub</strong></a>
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Oisin McGrath · MIT licensed · <a href="https://github.com/oisinmcgrath/capsule">github.com/oisinmcgrath/capsule</a></p>
+      <p>
+        <a href="privacy.html">Privacy</a> ·
+        <a href="terms.html">Terms</a> ·
+        No tracking on this page.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Terms of use for Capsule: free MIT-licensed software, no warranty, use at your own risk, Australian consumer law note.">
+  <title>Terms of use — Capsule</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <h1>Terms of use</h1>
+      <p class="tagline">Capsule · Oisin McGrath</p>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="terms.html" aria-current="page">Terms of use</a>
+      </nav>
+    </header>
+
+    <main>
+      <p class="meta"><strong>Last updated:</strong> 25 July 2026</p>
+
+      <p>
+        These Terms of use (“Terms”) apply when you download, install, run, or
+        redistribute <strong>Capsule</strong> (the “Software”), free software by
+        <strong>Oisin McGrath</strong> (“I”, “me”, “the developer”).
+      </p>
+      <p>
+        <strong>Short version:</strong> the Software is free. You use it at your own
+        risk. There is no warranty. Capsule builds containers that run with broad
+        permissions on your machine — you are responsible for what runs inside them
+        and for your host's security. Read the disclaimer below.
+      </p>
+      <p>
+        These Terms are written in plain language for users of free software. They
+        are <strong>not legal advice</strong> and do not create a paid professional
+        engagement.
+      </p>
+
+      <h2>1. What the Software is</h2>
+      <p>
+        Capsule is a host-side shell script that scaffolds a sandboxed DevPod +
+        Podman + VSCodium development container from a folder you choose. It runs on
+        <em>your</em> machine and drives tools already on your machine (or that it
+        installs at your direction, such as the <code>devpod</code> CLI). I do not
+        operate a hosted Capsule service.
+      </p>
+
+      <h2>2. Licence — MIT</h2>
+      <p>
+        The Software is free software licensed under the
+        <strong>MIT License</strong>, as set out in the <code>LICENSE</code> file
+        distributed with the source. That licence gives you broad freedom to use,
+        copy, modify, merge, publish, distribute, sublicense, and sell copies of the
+        Software, subject to including the copyright notice and licence text.
+      </p>
+      <p>
+        If anything in these Terms conflicts with the MIT License regarding your
+        rights to copy, modify, or redistribute the Software, the
+        <strong>MIT License controls</strong> for those rights. These Terms restate
+        the no-warranty / risk rules for clarity and add product-use notes.
+      </p>
+
+      <h2>3. Free software — no paid service, no support contract</h2>
+      <p>
+        I make Capsule available free of charge in the hope that it is useful.
+        Unless we separately agree in writing:
+      </p>
+      <ul>
+        <li>you are not buying a service, SLA, or guaranteed update schedule;</li>
+        <li>I am not obliged to provide support, training, or custom work;</li>
+        <li>I may stop maintaining the project at any time;</li>
+        <li>
+          any help I give (email, issues, chat) is voluntary and does not create a
+          duty of care beyond what the law requires for free software distribution.
+        </li>
+      </ul>
+
+      <h2>4. Entire risk is yours (no warranty)</h2>
+      <p>
+        The Software is distributed in the hope that it will be useful, but
+        <strong>WITHOUT ANY WARRANTY</strong>. To the extent permitted by applicable
+        law:
+      </p>
+      <p style="text-transform: uppercase; font-size: 0.95em; line-height: 1.45;">
+        The Software is provided “as is”, without warranty of any kind, express or
+        implied, including but not limited to the warranties of merchantability,
+        fitness for a particular purpose and noninfringement. The entire risk as to
+        the quality and performance of the Software is with you. Should the Software
+        prove defective, you assume the cost of all necessary servicing, repair, or
+        correction.
+      </p>
+      <p>
+        In practical terms: if the wizard misconfigures a container, a GPU/NPU
+        passthrough fails, a script step damages local files, or a scaffolded repo
+        is unsuitable for your use, <strong>you</strong> bear that risk, not me —
+        except only where a law says a disclaimer cannot apply.
+      </p>
+
+      <h2>5. Limitation of liability</h2>
+      <p style="text-transform: uppercase; font-size: 0.95em; line-height: 1.45;">
+        In no event, unless required by applicable law or agreed to in writing, will
+        the author or any other party who modifies and/or redistributes the Software
+        as permitted by the MIT License be liable to you for damages, including any
+        general, special, incidental, or consequential damages arising out of the use
+        or inability to use the Software (including but not limited to loss of data,
+        data being rendered inaccurate, losses sustained by you or third parties, or a
+        failure of the Software to operate with any other programs), even if such
+        holder or other party has been advised of the possibility of such damages.
+      </p>
+      <p>
+        Without limiting the above, I am not liable for lost time, lost work, damage
+        to a host system, or reputational harm connected with your use of the
+        Software, to the maximum extent the law allows.
+      </p>
+
+      <h2>6. Australian Consumer Law (important honesty note)</h2>
+      <p>
+        If you are a consumer under the <strong>Australian Consumer Law</strong>
+        (ACL) and the ACL applies to a particular supply, some guarantees cannot be
+        excluded. Where the ACL applies and liability cannot be excluded, then to the
+        extent the law allows liability to be limited, my liability is limited to one
+        or more of: re-supply of the Software; or the cost of re-supply. Where the
+        Software is supplied free of charge, remedies may be limited further by the
+        nature of a free supply.
+      </p>
+      <p>
+        Nothing in these Terms is intended to exclude liability that cannot legally
+        be excluded (for example, fraud or certain non-excludable guarantees).
+        Everything else is disclaimed to the fullest extent allowed.
+        <strong>No disclaimer is a magic shield in every situation</strong> — that is
+        true of all free software.
+      </p>
+
+      <h2>7. Not professional or security advice</h2>
+      <p>
+        The Software is a tool only. It does <strong>not</strong> provide security,
+        infrastructure, or legal advice. Sandbox isolation reduces but does not
+        eliminate risk from anything you choose to run inside a container. You alone
+        are responsible for:
+      </p>
+      <ul>
+        <li>reviewing what a scaffolded container is configured to do before you rely on it;</li>
+        <li>what code, agents, or commands you run inside a Capsule-built container;</li>
+        <li>keeping your own host, credentials, and backups secure;</li>
+        <li>getting qualified advice when you need it for a production or sensitive environment.</li>
+      </ul>
+
+      <h2>8. Your responsibilities</h2>
+      <ul>
+        <li>
+          <strong>Configuration:</strong> the accuracy of paths, ports, device
+          passthrough, and identity values you supply to the wizard.
+        </li>
+        <li>
+          <strong>Authorisation:</strong> only use device passthrough (GPU/NPU),
+          SSH keys, and git remotes you are permitted to use.
+        </li>
+        <li>
+          <strong>Security:</strong> protect your host machine, its credentials, and
+          the containers Capsule builds (see the
+          <a href="privacy.html">Privacy policy</a>).
+        </li>
+        <li>
+          <strong>Lawful use:</strong> no use of the Software for unlawful purposes.
+        </li>
+      </ul>
+
+      <h2>9. Third-party services and tools</h2>
+      <p>
+        Capsule drives third-party tools (DevPod, Podman, VSCodium, git, ssh) and may
+        download the <code>devpod</code> CLI release binary on your behalf. Those
+        tools are not mine, can change or break independently of Capsule, and are
+        governed by their own licences and terms. I am not responsible for
+        third-party tool defects, outages, or policy changes.
+      </p>
+
+      <h2>10. Privacy</h2>
+      <p>
+        How the Software handles data is described in the
+        <a href="privacy.html">Privacy policy</a>. In short: nothing is collected by
+        me. That policy is part of how the product is meant to work; it does not
+        turn free software into a paid hosting service.
+      </p>
+
+      <h2>11. Website</h2>
+      <p>
+        These pages are informational. They are provided “as is”. I do not promise
+        continuous availability. No tracking cookies or analytics are intentionally
+        embedded by me on these static pages.
+      </p>
+
+      <h2>12. Acceptable use</h2>
+      <p>You must not use the Software to:</p>
+      <ul>
+        <li>bypass security controls on systems you do not own or have permission to test;</li>
+        <li>infringe others' rights;</li>
+        <li>misuse device passthrough or credentials beyond what you are authorised to access; or</li>
+        <li>violate applicable law.</li>
+      </ul>
+
+      <h2>13. Changes</h2>
+      <p>
+        I may update these Terms by publishing a new version on this site with a new
+        “Last updated” date. The MIT licence text for the Software changes only if a
+        new version is adopted. If you do not agree with updated Terms, stop using
+        the Software.
+      </p>
+
+      <h2>14. Governing law</h2>
+      <p>
+        These Terms are governed by the laws of <strong>Australia</strong> and,
+        where they apply, the laws of <strong>Western Australia</strong>. Courts of
+        Australia have non-exclusive jurisdiction. Mandatory consumer protections in
+        your place of residence may still apply.
+      </p>
+
+      <h2>15. Contact</h2>
+      <p>
+        Questions:
+        <a href="mailto:privacy@oisinmcgrath.com">privacy@oisinmcgrath.com</a>
+      </p>
+      <p class="meta" style="margin-top: 1.5rem;">
+        Free software under the MIT License. Use at your own risk. No warranty.
+      </p>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        <a href="index.html">Home</a> ·
+        <a href="privacy.html">Privacy policy</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Privacy policy for Capsule: free MIT-licensed host-side installer script, no telemetry, no accounts, no data collection.">
+  <title>Privacy policy — Capsule</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <h1>Privacy policy</h1>
+      <p class="tagline">Capsule · Oisin McGrath</p>
+      <nav class="site-nav" aria-label="Primary">
+        <a href="index.html">Home</a>
+        <a href="privacy.html" aria-current="page">Privacy policy</a>
+        <a href="terms.html">Terms of use</a>
+      </nav>
+    </header>
+
+    <main>
+      <p class="meta"><strong>Last updated:</strong> 25 July 2026</p>
+
+      <p>
+        This privacy policy describes how <strong>Capsule</strong> (“the Software”,
+        “the wizard”) handles information when you run it. Capsule is free software
+        developed by <strong>Oisin McGrath</strong> (“I”, “me”, “the developer”) under
+        the <a href="https://opensource.org/licenses/MIT">MIT License</a>.
+      </p>
+      <p>
+        <strong>Plain summary:</strong> Capsule collects nothing. It is a shell script
+        you run on your own machine. There is no Capsule account, no Capsule server,
+        no telemetry, and no analytics. I never receive any information about your
+        computer, your repos, or how you use the Software.
+      </p>
+      <p>
+        This document is not legal advice. For the “use at your own risk” rules, see
+        the <a href="terms.html">Terms of use</a> and the <code>LICENSE</code> file
+        shipped with the Software.
+      </p>
+
+      <h2>1. What Capsule is</h2>
+      <p>
+        Capsule is a <strong>host-side shell script</strong> (<code>wizard.sh</code>)
+        that scaffolds a sandboxed DevPod + Podman + VSCodium development container in
+        a folder you choose. It runs interactively in your terminal, asks you
+        configuration questions, and writes files to your own disk. It is not a hosted
+        service, not a SaaS product, and has no login of any kind.
+      </p>
+      <p>
+        I <strong>operate no Capsule backend server</strong>. There is nowhere for
+        data to go, because the Software never sends anything anywhere on its own
+        initiative.
+      </p>
+
+      <h2>2. What the Software processes, and where it stays</h2>
+      <p>
+        Everything Capsule reads or writes stays on your machine (and inside the
+        containers it builds for you):
+      </p>
+      <ul>
+        <li>answers you give the wizard's interactive prompts (paths, ports, names, timezone, git author identity);</li>
+        <li>a one-time machine profile at <code>~/.config/capsule/machine.conf</code> so you are not asked twice;</li>
+        <li>the generated <code>.devcontainer/</code> config, decision log, and task board files written into the target repo;</li>
+        <li>local GPU/NPU/iGPU device detection used only to decide what to pass through to the container.</li>
+      </ul>
+      <p>
+        None of this is transmitted to me. I have no visibility into which machines
+        run Capsule, what repos it scaffolds, or what those repos contain.
+      </p>
+
+      <h2>3. Network activity</h2>
+      <p>
+        Capsule itself makes no calls to any server I control. The Software does
+        invoke, or help you invoke, third-party tools that talk to <em>their own</em>
+        infrastructure at your direction — for example:
+      </p>
+      <ul>
+        <li><code>devpod</code>, which the wizard can download from its official GitHub release if not already installed;</li>
+        <li><code>podman</code>, <code>git</code>, <code>ssh</code>, and package managers you already have configured.</li>
+      </ul>
+      <p>
+        Those tools are not mine, are not modified by me to add tracking, and are
+        governed by their own respective privacy practices. Any network request they
+        make (for example, cloning a git remote you specify, or fetching a released
+        binary) is a request <em>you</em> configured, from <em>your</em> machine.
+      </p>
+
+      <h2>4. No accounts, no cloud storage</h2>
+      <p>
+        There is no Capsule account to create, no cloud database, and no cloud
+        backup. Nothing about your identity is collected, because nothing is
+        collected.
+      </p>
+
+      <h2>5. Security</h2>
+      <p>
+        Capsule builds rootless containers and, where relevant, wires up SSH/GPU
+        device access as you request. <strong>You</strong> remain responsible for
+        your host's security (OS updates, SSH keys, who has local access, and the
+        containers you choose to run inside). I cannot secure a machine I do not
+        control.
+      </p>
+
+      <h2>6. Retention and deletion</h2>
+      <p>
+        Because nothing leaves your machine, there is nothing for me to retain or
+        delete on your behalf. Deleting the machine profile file, the scaffolded
+        repo, or the containers Capsule built removes that data completely — that is
+        entirely under your control.
+      </p>
+
+      <h2>7. Children</h2>
+      <p>
+        Capsule is a developer tool intended for adults aged 18 and over. It is not
+        directed at children.
+      </p>
+
+      <h2>8. Free software and honesty about risk</h2>
+      <p>
+        Capsule is free software, provided in the hope that it is useful. I do not
+        sell a paid privacy “service” and do not promise perfection. This page
+        describes <strong>how the Software is designed to behave</strong>. Bugs,
+        misuse, or issues with third-party tools it invokes can still cause problems
+        — that risk sits with you under the MIT License and the
+        <a href="terms.html">Terms of use</a>.
+      </p>
+
+      <h2>9. This website</h2>
+      <p>
+        Public pages on this site are static. They use <strong>no tracking, no
+        analytics, and no advertising cookies</strong> that I configure. Your
+        browser and host may still produce ordinary server or TLS logs outside my
+        product design; I do not run ad trackers on these pages.
+      </p>
+
+      <h2>10. Changes</h2>
+      <p>
+        If Capsule's behaviour changes in a way that affects this policy, I will
+        update this page and the “Last updated” date.
+      </p>
+
+      <h2>11. Contact</h2>
+      <p>
+        Privacy questions about Capsule:
+        <a href="mailto:privacy@oisinmcgrath.com">privacy@oisinmcgrath.com</a>
+      </p>
+      <p>
+        Developer: Oisin McGrath ·
+        <a href="https://github.com/oisinmcgrath">github.com/oisinmcgrath</a>
+      </p>
+      <p class="meta">
+        This policy is provided for transparency. It is not a guarantee against all
+        legal claims in every jurisdiction.
+      </p>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        <a href="index.html">Home</a> ·
+        <a href="terms.html">Terms of use</a> ·
+        Free software · No tracking on this page.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
