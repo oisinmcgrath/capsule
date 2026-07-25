@@ -18,7 +18,8 @@
 - **NPU & iGPU passthrough** — AMD XDNA / Ryzen AI NPU (`/dev/accel`) and AMD ROCm iGPU (`/dev/dri` + `/dev/kfd`), with the right render/video groups.
 - **Host Wayland clipboard passthrough** — paste a host screenshot (`image/png`, which OSC 52 can't carry) straight into an in-container tool.
 - **Agent-ready on first launch** — installs generic Claude Code hooks, a lightweight decision log (tagdexer), and a persistent task board, all firing on the first chat; Grok agent hooks are mirrored automatically with no duplicate scripts.
-- **First-run machine profile** — host-specific values (container timezone, git author identity) are captured once in `~/.config/capsule/machine.conf` and reused for every repo you scaffold afterwards.
+- **First-run machine profile** — host-specific values (container timezone, git author identity, where tagdexer/setsquare live, and whether to deploy the tagdexer decision-log — always / never / ask) are captured once in `~/.config/capsule/machine.conf` and reused for every repo you scaffold afterwards.
+- **Optional, self-contained tagdexer** — the decision-log CLI is vendored in this repo (works with no external dependency); choose to deploy it into every repo, never, or per-repo, and the wizard can `git clone` it for you on first run.
 - **Safe on existing repos** — preserves your code, git history, decision log, and task lists; backs up anything it replaces.
 - **Isolation verified, never `--pid=host`** — sidesteps the `open-remote-ssh` "Could not establish connection" attach failure by construction (details below).
 
@@ -35,7 +36,7 @@ mkdir -p ~/projects/<new-repo>      # create the empty target repo first
 bash wizard.sh
 ```
 
-Answer the prompts (which repo, GPU/NPU/iGPU?, extra apt packages, display name). On its **first ever run** the wizard also asks for your machine profile — container timezone and the git identity to stamp on scaffolded repos — then saves it and never asks again. It derives everything else and offers to build + open the container at the end.
+Answer the prompts (which repo, GPU/NPU/iGPU?, extra apt packages, display name). On its **first ever run** the wizard also sets up your machine profile — container timezone, the git identity to stamp on scaffolded repos, your tagdexer deploy policy (always/never/ask), and where tagdexer/setsquare live (it can `git clone` tagdexer for you) — then saves it and never asks again. It derives everything else and offers to build + open the container at the end.
 
 **GUI mode (default on the desktop):** when a display and `kdialog` or `zenity` are present, the questions appear as dialogs — you browse and click the repo folder instead of typing its name, and confirm the derived values in a yes/no box. `kdialog` (KDE-native picker) is preferred if installed; `zenity` is the fallback. Cancel on any dialog aborts. Pass `--no-gui` for the classic terminal prompts. Progress always prints to the terminal.
 
