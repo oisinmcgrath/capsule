@@ -133,7 +133,8 @@ fi
 # ---------------------------------------------------------------------------
 step "Preflight"
 [ -d "$PAYLOAD" ] || die "payload/ not found next to wizard.sh — run from the wizard repo."
-for t in jq devpod podman ssh sqlite3; do command -v "$t" >/dev/null 2>&1 || die "missing required host tool: $t"; done
+# devpod is intentionally NOT here — the machine profile can install it (below).
+for t in jq podman ssh sqlite3; do command -v "$t" >/dev/null 2>&1 || die "missing required host tool: $t"; done
 [ -d "$CENTRAL_TAGDEXER" ] || warn "tagdexer source not found at $CENTRAL_TAGDEXER — deploy will be unavailable (fine if you choose not to deploy it)."
 [ -d "$CENTRAL_TAGDEXER" ] && [ ! -f "$CENTRAL_TAGDEXER/trackdexer.config.json" ] && warn "tagdexer missing trackdexer.config.json — shared config layer will be unavailable."
 ok "host tools present"
@@ -149,7 +150,7 @@ ok "host tools present"
 step "Machine profile"
 MACHINE_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/capsule/machine.conf"
 MACHINE_TZ=""; MACHINE_GIT_NAME=""; MACHINE_GIT_EMAIL=""; TAGDEXER_MODE=""
-MACHINE_TAGDEXER_PATH=""; MACHINE_SETSQUARE_PATH=""
+MACHINE_TAGDEXER_PATH=""; MACHINE_SETSQUARE_PATH=""; MACHINE_DEVPOD_BIN=""
 # shellcheck source=/dev/null
 [ -f "$MACHINE_CONF" ] && . "$MACHINE_CONF"
 
@@ -215,6 +216,29 @@ if [ -z "${MACHINE_SETSQUARE_PATH:-}" ]; then
   fi
   _conf_new=1
 fi
+if [ -z "${MACHINE_DEVPOD_BIN:-}" ]; then
+  # The wizard drives the devpod CLI (github.com/loft-sh/devpod). Use it from
+  # PATH, install the official release binary, or point at an existing build.
+  if command -v devpod >/dev/null 2>&1; then
+    MACHINE_DEVPOD_BIN="$(command -v devpod)"
+    ok "found devpod on PATH: $MACHINE_DEVPOD_BIN"
+  elif ask_yn "devpod CLI not found — install it from github.com/loft-sh/devpod releases now?" y; then
+    case "$(uname -m)" in x86_64|amd64) _a=amd64 ;; aarch64|arm64) _a=arm64 ;; *) _a="" ;; esac
+    _dst="$(ask "Install the devpod binary to" "$HOME/.local/bin/devpod")"
+    if [ -n "$_a" ] && mkdir -p "$(dirname "$_dst")" \
+       && curl -fL "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-$_a" -o "$_dst" \
+       && chmod +x "$_dst"; then
+      MACHINE_DEVPOD_BIN="$_dst"; ok "installed devpod -> $_dst"
+      case ":$PATH:" in *":$(dirname "$_dst"):"*) : ;; *) warn "$(dirname "$_dst") is not on PATH — the wizard calls devpod by full path, but add it to PATH for everyday use." ;; esac
+    else
+      warn "devpod install failed (arch '$(uname -m)' or download error) — install it from github.com/loft-sh/devpod, then re-run."
+      MACHINE_DEVPOD_BIN="devpod"
+    fi
+  else
+    MACHINE_DEVPOD_BIN="$(ask "Path to your existing devpod binary" "devpod")"
+  fi
+  _conf_new=1
+fi
 if [ "$_conf_new" = 1 ]; then
   mkdir -p "$(dirname "$MACHINE_CONF")"
   {
@@ -226,6 +250,7 @@ if [ "$_conf_new" = 1 ]; then
     printf 'TAGDEXER_MODE=%q\n'          "$TAGDEXER_MODE"
     printf 'MACHINE_TAGDEXER_PATH=%q\n'  "$MACHINE_TAGDEXER_PATH"
     printf 'MACHINE_SETSQUARE_PATH=%q\n' "$MACHINE_SETSQUARE_PATH"
+    printf 'MACHINE_DEVPOD_BIN=%q\n'     "$MACHINE_DEVPOD_BIN"
   } > "$MACHINE_CONF"
   ok "machine profile saved -> $MACHINE_CONF (reused for every future repo; edit/delete to change)"
 else
@@ -246,6 +271,9 @@ if [ -z "$CENTRAL_SETSQUARE_ENV" ]; then
   esac
 fi
 ok "tagdexer source: $CENTRAL_TAGDEXER${CENTRAL_SETSQUARE:+ · setsquare source: $CENTRAL_SETSQUARE}"
+# The devpod binary the build step will invoke (full path or bare 'devpod').
+DEVPOD="${MACHINE_DEVPOD_BIN:-devpod}"
+command -v "$DEVPOD" >/dev/null 2>&1 || warn "devpod not runnable ($DEVPOD) — build/open will be skipped or fail until it's installed."
 
 # ---------------------------------------------------------------------------
 # 1. interactive inputs
@@ -1007,7 +1035,7 @@ if ask_yn "Build + open the container now (devpod up --ide codium)?" y; then
   # just re-scaffolded. Force-delete any existing workspace first so the rebuild
   # always applies the fresh config + image. Repo files are bind-mounted, so
   # nothing in the project is lost. No-op (silent) on a first-time creation.
-  if devpod delete "$SANITIZED" --force >/dev/null 2>&1; then
+  if "$DEVPOD" delete "$SANITIZED" --force >/dev/null 2>&1; then
     say "  existing workspace '$SANITIZED' removed — recreating with the new config"
   fi
   # First creation MUST point DevPod at the local folder PATH, not the bare
@@ -1017,7 +1045,7 @@ if ask_yn "Build + open the container now (devpod up --ide codium)?" y; then
   # do NOT pipe through tail (it buffers everything until EOF, so the terminal
   # looks frozen for minutes, and pipefail would read tail's exit code, masking a
   # devpod failure). Direct output preserves both live progress and exit status.
-  devpod up "$HOST_REPO_PATH" --ide codium 2>&1 || warn "devpod up returned non-zero — see output above"
+  "$DEVPOD" up "$HOST_REPO_PATH" --ide codium 2>&1 || warn "devpod up returned non-zero — see output above"
   step "Verify isolation"
   # pgrep -x, NOT -f: the ssh remote shell's own cmdline contains "synochat",
   # so -f self-matches and reports HOST-VISIBLE even in an isolated container.
@@ -1055,7 +1083,7 @@ if ask_yn "Build + open the container now (devpod up --ide codium)?" y; then
     fi
   fi
 else
-  say "  Skipped. Build later with: devpod up $SANITIZED --ide codium"
+  say "  Skipped. Build later with: $DEVPOD up $SANITIZED --ide codium"
 fi
 
 step "Done"

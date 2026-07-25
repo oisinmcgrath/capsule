@@ -44,9 +44,9 @@ Answer the prompts (which repo, GPU/NPU/iGPU?, extra apt packages, display name)
 
 ## Requirements
 
-Run it **from the host** — the wizard drives `devpod`, `podman`, `nvidia-ctk`, `ssh`, and `sqlite3`, none of which exist inside a devcontainer. It refuses to run if a required tool is missing.
+Run it **from the host** — the wizard drives `devpod`, `podman`, `nvidia-ctk`, `ssh`, and `sqlite3`, none of which exist inside a devcontainer. It refuses to run if a required tool is missing — except the `devpod` CLI, which the first-run profile offers to install for you (the official binary from [github.com/loft-sh/devpod](https://github.com/loft-sh/devpod)) or lets you point at an existing build.
 
-Host tools: `bash`, `jq`, `devpod`, `podman`, `ssh`, `sqlite3` (plus `nvidia-ctk` only if you choose GPU). Portable across Linux hosts — nothing host-specific is baked into the script; per-machine values live in the machine profile.
+Host tools: `bash`, `jq`, `podman`, `ssh`, `sqlite3` (plus `nvidia-ctk` only if you choose GPU). The `devpod` CLI is auto-installable on first run. Portable across Linux hosts — nothing host-specific is baked into the script; per-machine values live in the machine profile.
 
 ---
 
