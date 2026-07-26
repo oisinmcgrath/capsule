@@ -17,22 +17,22 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell,
     "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
-  color: #1a1a1a;
-  background: #f6f7f9;
+  color: #14201d;
+  background: #f2f8f5;
 }
 
 a {
-  color: #0b5cab;
+  color: #0f6f6f;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 a:hover {
-  color: #08427a;
+  color: #0a5252;
 }
 
 a:focus-visible {
-  outline: 2px solid #0b5cab;
+  outline: 2px solid #0f6f6f;
   outline-offset: 2px;
 }
 
@@ -45,7 +45,7 @@ a:focus-visible {
 header.site-header {
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #d8dde6;
+  border-bottom: 1px solid #cfe3da;
   text-align: center;
 }
 
@@ -66,7 +66,7 @@ header.site-header h1 {
 header.site-header .tagline {
   margin: 0 auto;
   max-width: 34rem;
-  color: #4a5568;
+  color: #5f7169;
   font-size: 0.95rem;
 }
 
@@ -98,7 +98,7 @@ main h2 {
 
 main p,
 main li {
-  color: #222;
+  color: #26332e;
 }
 
 main p {
@@ -116,12 +116,12 @@ main li {
 
 .lead {
   font-size: 1.05rem;
-  color: #2d3748;
+  color: #33443d;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #d8dde6;
+  background: #ffffff;
+  border: 1px solid #cfe3da;
   border-radius: 8px;
   padding: 1.15rem 1.25rem;
   margin: 1rem 0 1.5rem;
@@ -136,7 +136,7 @@ code,
   font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
     monospace;
   font-size: 0.88em;
-  background: #eef1f6;
+  background: #e4f0ea;
   padding: 0.1em 0.35em;
   border-radius: 3px;
   word-break: break-word;
@@ -145,9 +145,9 @@ code,
 footer.site-footer {
   margin-top: 2.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #d8dde6;
+  border-top: 1px solid #cfe3da;
   font-size: 0.88rem;
-  color: #4a5568;
+  color: #5f7169;
   text-align: center;
 }
 
@@ -157,7 +157,7 @@ footer.site-footer p {
 }
 
 footer.site-footer a {
-  color: #0b5cab;
+  color: #0f6f6f;
 }
 
 @media (max-width: 480px) {
@@ -169,3 +169,6 @@ footer.site-footer a {
     font-size: 1.4rem;
   }
 }
+
+/* Section headings pick up the coral from the capsule mark. */
+main h2 { color: #c2410c; }
