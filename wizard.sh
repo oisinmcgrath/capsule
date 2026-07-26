@@ -151,6 +151,7 @@ step "Machine profile"
 MACHINE_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/capsule/machine.conf"
 MACHINE_TZ=""; MACHINE_GIT_NAME=""; MACHINE_GIT_EMAIL=""; TAGDEXER_MODE=""
 MACHINE_TAGDEXER_PATH=""; MACHINE_SETSQUARE_PATH=""; MACHINE_DEVPOD_BIN=""
+TASKBOARD_MODE=""
 # shellcheck source=/dev/null
 [ -f "$MACHINE_CONF" ] && . "$MACHINE_CONF"
 
@@ -170,14 +171,33 @@ if [ -z "${MACHINE_GIT_EMAIL:-}" ]; then
   MACHINE_GIT_EMAIL="$(ask "Git author email to stamp on scaffolded repos" "${_d:-owner@local}")"
   _conf_new=1
 fi
+if [ -z "${TAGDEXER_MODE:-}" ] || [ -z "${TASKBOARD_MODE:-}" ]; then
+  say ""
+  say "Include dev tools? Two are available for scaffolded repos:"
+  say "  tagdexer  - tag-based file indexing for agents and users, plus a CLI"
+  say "              decision log that captures the intent behind each choice."
+  say "  taskboard - a persistent to-do list for agents, so pending work"
+  say "              survives between chat sessions instead of being lost."
+  say "Each can be set to always deploy, never deploy, or ask you every run."
+fi
 if [ -z "${TAGDEXER_MODE:-}" ]; then
   # Default policy for deploying the tagdexer decision-log into each repo:
   #   always = deploy every run · never = never deploy · ask = prompt per run.
-  _d="$(ask "Deploy the tagdexer decision-log into repos? (always/never/ask)" "always")"
+  _d="$(ask "Deploy tagdexer into repos? (always/never/ask)" "always")"
   case "$(printf '%s' "$_d" | tr '[:upper:]' '[:lower:]')" in
     never|no|n) TAGDEXER_MODE=never ;;
     ask)        TAGDEXER_MODE=ask ;;
     *)          TAGDEXER_MODE=always ;;
+  esac
+  _conf_new=1
+fi
+if [ -z "${TASKBOARD_MODE:-}" ]; then
+  # Same always/never/ask policy, applied to taskboard.
+  _d="$(ask "Deploy taskboard into repos? (always/never/ask)" "always")"
+  case "$(printf '%s' "$_d" | tr '[:upper:]' '[:lower:]')" in
+    never|no|n) TASKBOARD_MODE=never ;;
+    ask)        TASKBOARD_MODE=ask ;;
+    *)          TASKBOARD_MODE=always ;;
   esac
   _conf_new=1
 fi
@@ -251,10 +271,11 @@ if [ "$_conf_new" = 1 ]; then
     printf 'MACHINE_TAGDEXER_PATH=%q\n'  "$MACHINE_TAGDEXER_PATH"
     printf 'MACHINE_SETSQUARE_PATH=%q\n' "$MACHINE_SETSQUARE_PATH"
     printf 'MACHINE_DEVPOD_BIN=%q\n'     "$MACHINE_DEVPOD_BIN"
+    printf 'TASKBOARD_MODE=%q\n'         "$TASKBOARD_MODE"
   } > "$MACHINE_CONF"
   ok "machine profile saved -> $MACHINE_CONF (reused for every future repo; edit/delete to change)"
 else
-  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>, tagdexer=$TAGDEXER_MODE @ $MACHINE_TAGDEXER_PATH)"
+  ok "machine profile loaded (tz=$MACHINE_TZ, git=$MACHINE_GIT_NAME <$MACHINE_GIT_EMAIL>, tagdexer=$TAGDEXER_MODE @ $MACHINE_TAGDEXER_PATH, taskboard=$TASKBOARD_MODE)"
 fi
 
 # Apply the machine-profile paths (an explicit $CENTRAL_* env var still wins),
@@ -408,6 +429,13 @@ esac
 # tagdexer requested but no source to deploy from → fail fast rather than half-scaffold.
 [ "$DEPLOY_TAGDEXER" = y ] && [ ! -d "$CENTRAL_TAGDEXER" ] && die "tagdexer deploy requested but its source is missing at $CENTRAL_TAGDEXER (set \$CENTRAL_TAGDEXER, or choose 'never')."
 
+# taskboard deploy for THIS run, per the machine-profile policy (always/never/ask).
+DEPLOY_TASKBOARD=y
+case "$TASKBOARD_MODE" in
+  never) DEPLOY_TASKBOARD=n ;;
+  ask)   DEPLOY_TASKBOARD=n; ask_yn "Deploy taskboard into this repo?" y && DEPLOY_TASKBOARD=y ;;
+esac
+
 # ---------------------------------------------------------------------------
 # 2. derive everything (sanitization + project keys + non-clashing port)
 # ---------------------------------------------------------------------------
@@ -455,6 +483,7 @@ say "  iGPU (ROCm) .......... $WANT_IGPU   (/dev/dri + /dev/kfd, video+render gr
 say "  extra apt ............. ${EXTRA_APT:-(none)}"
 say "  repo needs (pasted) .. $NEEDS_SUMMARY"
 say "  tagdexer ............. $DEPLOY_TAGDEXER   (policy: $TAGDEXER_MODE)"
+say "  taskboard ............. $DEPLOY_TASKBOARD   (policy: $TASKBOARD_MODE)"
 if [ -n "$GUI_TOOL" ]; then
   ask_yn "Proceed with these derived values?
 
@@ -770,7 +799,11 @@ cat > "$HOST_REPO_PATH/.claude/settings.json" <<'JSON'
   }
 }
 JSON
-ok ".claude/settings.json wired (taskboard adds its 2 hooks next)"
+if [ "$DEPLOY_TASKBOARD" = y ]; then
+  ok ".claude/settings.json wired (taskboard adds its 2 hooks next)"
+else
+  ok ".claude/settings.json wired"
+fi
 
 # ---------------------------------------------------------------------------
 # 5. deploy tagdexer (CLI files in-repo; .tagdexerrc -> in-CONTAINER path)
@@ -804,6 +837,9 @@ fi
 # 6. deploy a FRESH taskboard (self-contained; its installer wires 2 hooks)
 # ---------------------------------------------------------------------------
 step "Deploy taskboard"
+if [ "$DEPLOY_TASKBOARD" != y ]; then
+  ok "taskboard deploy skipped (policy: $TASKBOARD_MODE) — no taskboard/ written"
+else
 # Existing repo: pending work survives the refresh — lists/ + domains.json are
 # carried across; only the taskboard code + hooks are replaced.
 TB="$HOST_REPO_PATH/taskboard"
@@ -826,6 +862,7 @@ if [ -n "$TB_KEEP" ]; then
   ok "existing taskboard lists + domains preserved across refresh"
 else
   ok "fresh empty board"
+fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -899,13 +936,22 @@ Container-side operations: agents run autonomously.
 Host-side operations (browser apps, owner-interactive tools): agents cannot act autonomously. Supply the command as a pasteable code block; the owner runs it host-side and returns the output. Container paths (\`/workspaces/$SANITIZED/...\`) resolve on the host as-is via symlink; if a path fails to resolve there, substitute the \`$HOST_REPO_PATH/\` prefix. Agents assist, not act.
 MD
 )"
-# CLAUDE.md wording adapts to whether tagdexer was deployed into this repo.
-if [ "$DEPLOY_TAGDEXER" = y ]; then
+# CLAUDE.md wording adapts to whether tagdexer and/or taskboard were deployed into this repo.
+TB_CLAUSE=""
+[ "$DEPLOY_TASKBOARD" = y ] && TB_CLAUSE=' Pending work lives in the taskboard (`node taskboard/taskboard.js --help`).'
+if [ "$DEPLOY_TAGDEXER" = y ] && [ "$DEPLOY_TASKBOARD" = y ]; then
   CM_FIRST='**First action: read [tagdexer/AGENT_README.md](tagdexer/AGENT_README.md) in full.** Use tagdex as your primary navigation. (Onboarding + trackdexer protocol are injected by the SessionStart hook.)'
-  CM_DECISIONS='**CLAUDE.md is orientation only.** Decisions never go in markdown — `node tagdexer/tracker.js --add` for every architectural choice, finding, dead-end, or handoff. Pending work lives in the taskboard (`node taskboard/taskboard.js --help`).'
-else
+elif [ "$DEPLOY_TAGDEXER" = y ]; then
+  CM_FIRST='**First action: read [tagdexer/AGENT_README.md](tagdexer/AGENT_README.md) in full.** Use tagdex as your primary navigation. (Onboarding + trackdexer protocol are injected by the SessionStart hook.)'
+elif [ "$DEPLOY_TASKBOARD" = y ]; then
   CM_FIRST='**First action: read this file, then run `node taskboard/taskboard.js --help` for pending work.**'
-  CM_DECISIONS='**CLAUDE.md is orientation only.** Pending work lives in the taskboard (`node taskboard/taskboard.js --help`).'
+else
+  CM_FIRST='**First action: read this file.**'
+fi
+if [ "$DEPLOY_TAGDEXER" = y ]; then
+  CM_DECISIONS="**CLAUDE.md is orientation only.** Decisions never go in markdown — \`node tagdexer/tracker.js --add\` for every architectural choice, finding, dead-end, or handoff.${TB_CLAUSE}"
+else
+  CM_DECISIONS="**CLAUDE.md is orientation only.**${TB_CLAUSE}"
 fi
 if [ ! -f "$HOST_REPO_PATH/CLAUDE.md" ]; then
 cat > "$HOST_REPO_PATH/CLAUDE.md" <<MD
